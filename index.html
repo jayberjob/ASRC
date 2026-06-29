@@ -1262,6 +1262,234 @@ textarea { resize: vertical; min-height: 150px; }
   .post-form-actions .btn { min-height: 56px; font-size: 17px; }
 }
 
+
+/* v10 automatic summary dashboard */
+.board-view-tabs {
+  display: inline-flex;
+  gap: 7px;
+  margin: 0 0 18px;
+  padding: 6px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: rgba(255,255,255,.9);
+  box-shadow: 0 10px 26px rgba(30,64,175,.06);
+}
+.board-view-tab {
+  min-height: 43px;
+  padding: 0 17px;
+  border: 0;
+  border-radius: 11px;
+  background: transparent;
+  color: #65758d;
+  font-weight: 800;
+  transition: .18s ease;
+}
+.board-view-tab:hover { color: var(--blue-700); background: var(--blue-50); }
+.board-view-tab.active {
+  color: #fff;
+  background: linear-gradient(135deg, var(--blue-600), var(--blue-800));
+  box-shadow: 0 8px 20px rgba(37,99,235,.18);
+}
+.tab-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 21px;
+  height: 21px;
+  margin-left: 5px;
+  padding: 0 6px;
+  border-radius: 999px;
+  background: rgba(255,255,255,.18);
+  font-size: 11px;
+}
+.board-view-tab:not(.active) .tab-count { background: var(--blue-100); color: var(--blue-700); }
+.board-view-panel[hidden] { display: none !important; }
+
+.auto-summary {
+  display: grid;
+  gap: 18px;
+}
+.summary-head-card,
+.summary-overview-card,
+.summary-section-card,
+.summary-empty-card {
+  background: rgba(255,255,255,.96);
+  border: 1px solid var(--line);
+  border-radius: 23px;
+  box-shadow: var(--shadow);
+}
+.summary-head-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 23px 25px;
+  background:
+    radial-gradient(circle at 90% 15%, rgba(96,165,250,.2), transparent 28%),
+    linear-gradient(135deg, #ffffff 0%, #eef5ff 100%);
+}
+.summary-head-copy h3 {
+  margin: 4px 0 5px;
+  color: var(--navy);
+  font-family: "Black Han Sans", "Noto Sans KR", sans-serif;
+  font-size: clamp(28px, 4vw, 42px);
+  font-weight: 400;
+  letter-spacing: -.035em;
+}
+.summary-head-copy p { margin: 0; color: var(--muted); }
+.summary-head-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+.summary-subtle-button {
+  min-height: 42px;
+  padding: 0 15px;
+  border: 1px solid var(--blue-200);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--blue-800);
+  font-weight: 800;
+}
+.summary-subtle-button:hover { background: var(--blue-50); }
+.summary-metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 13px;
+}
+.summary-metric {
+  min-width: 0;
+  padding: 18px;
+  border: 1px solid var(--line);
+  border-radius: 19px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(30,64,175,.055);
+}
+.summary-metric span { display: block; color: var(--muted); font-size: 12px; font-weight: 700; }
+.summary-metric strong {
+  display: block;
+  margin-top: 5px;
+  color: var(--navy);
+  font-size: 24px;
+  line-height: 1.25;
+  letter-spacing: -.035em;
+  overflow-wrap: anywhere;
+}
+.summary-overview-card { padding: 23px 25px; }
+.summary-card-title {
+  margin: 0 0 10px;
+  color: var(--navy);
+  font-size: 19px;
+  font-weight: 900;
+  letter-spacing: -.02em;
+}
+.summary-overview-text { margin: 0; color: #3d506d; font-size: 16px; line-height: 1.85; }
+.summary-updated { margin-top: 10px; color: #8a99ae; font-size: 12px; }
+.summary-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(0, .95fr);
+  gap: 18px;
+}
+.summary-section-card { padding: 22px; }
+.keyword-cloud { display: flex; flex-wrap: wrap; gap: 9px; }
+.keyword-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: var(--blue-50);
+  color: var(--blue-800);
+  font-weight: 800;
+  font-size: 13px;
+}
+.keyword-chip b { margin-left: 6px; color: var(--blue-500); font-size: 11px; }
+.summary-priority-list,
+.summary-category-list,
+.summary-new-list { display: grid; gap: 10px; }
+.summary-priority-item,
+.summary-new-item {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 11px;
+  align-items: start;
+  padding: 13px 14px;
+  border: 1px solid var(--line);
+  border-radius: 15px;
+  background: #fbfdff;
+}
+.summary-rank {
+  width: 29px;
+  height: 29px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--blue-500), var(--blue-800));
+  color: #fff;
+  font-size: 12px;
+  font-weight: 900;
+}
+.summary-item-copy { min-width: 0; }
+.summary-item-copy strong { display: block; color: var(--navy); line-height: 1.4; }
+.summary-item-copy p {
+  margin: 4px 0 0;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+}
+.summary-item-stats {
+  white-space: nowrap;
+  color: #6e7f97;
+  font-size: 12px;
+  font-weight: 700;
+}
+.summary-category-item {
+  padding: 15px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: #fbfdff;
+}
+.summary-category-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+.summary-category-head strong { color: var(--navy); }
+.summary-category-head span { color: var(--muted); font-size: 12px; }
+.summary-category-titles { margin: 0; padding-left: 18px; color: #52647e; font-size: 13px; }
+.summary-category-titles li + li { margin-top: 5px; }
+.summary-note {
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 15px;
+  background: #edf5ff;
+  color: #47617f;
+  font-size: 13px;
+  line-height: 1.65;
+}
+.summary-empty-card { padding: 46px 24px; text-align: center; }
+.summary-empty-card strong { display: block; color: var(--navy); font-size: 24px; }
+.summary-empty-card p { margin: 7px 0 0; color: var(--muted); }
+
+@media (max-width: 900px) {
+  .summary-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .summary-grid { grid-template-columns: 1fr; }
+}
+@media (max-width: 620px) {
+  .board-view-tabs { display: grid; grid-template-columns: 1fr 1fr; width: 100%; }
+  .board-view-tab { padding: 0 10px; }
+  .summary-head-card { display: grid; padding: 20px; }
+  .summary-head-actions { width: 100%; }
+  .summary-subtle-button { flex: 1; }
+  .summary-metrics { grid-template-columns: 1fr 1fr; }
+  .summary-metric { padding: 15px; }
+  .summary-metric strong { font-size: 20px; }
+  .summary-priority-item,
+  .summary-new-item { grid-template-columns: auto minmax(0, 1fr); }
+  .summary-item-stats { grid-column: 2; }
+}
+
 </style>
 </head>
 <body>
@@ -1338,40 +1566,51 @@ textarea { resize: vertical; min-height: 150px; }
         <button class="btn btn-dark" id="openPostBtn" type="button">+ 글쓰기</button>
       </div>
 
-      <div class="board-control-card">
-        <div class="filter-buttons" id="filterButtons">
-          <button class="filter active" data-filter="all">전체</button>
-          <button class="filter" data-filter="운영">운영</button>
-          <button class="filter" data-filter="정기런">정기런</button>
-          <button class="filter" data-filter="행사">행사</button>
-          <button class="filter" data-filter="친목">친목</button>
-          <button class="filter" data-filter="안전">안전</button>
-          <button class="filter" data-filter="기타">기타</button>
-        </div>
+      <div class="board-view-tabs" role="tablist" aria-label="게시판 보기 방식">
+        <button class="board-view-tab active" type="button" role="tab" aria-selected="true" data-board-view="posts">전체 의견</button>
+        <button class="board-view-tab" type="button" role="tab" aria-selected="false" data-board-view="summary">자동 요약 <span class="tab-count" id="summaryNewCount">0</span></button>
+      </div>
 
-        <div class="board-meta-control">
-          <div class="summary-line" aria-label="게시판 현황">
-            <span>글 <strong id="postCount">0</strong></span>
-            <span>댓글 <strong id="commentCount">0</strong></span>
-            <span>좋아요 <strong id="likeCount">0</strong></span>
+      <div class="board-view-panel" id="postsView">
+        <div class="board-control-card">
+          <div class="filter-buttons" id="filterButtons">
+            <button class="filter active" data-filter="all">전체</button>
+            <button class="filter" data-filter="운영">운영</button>
+            <button class="filter" data-filter="정기런">정기런</button>
+            <button class="filter" data-filter="행사">행사</button>
+            <button class="filter" data-filter="친목">친목</button>
+            <button class="filter" data-filter="안전">안전</button>
+            <button class="filter" data-filter="기타">기타</button>
           </div>
-          <select id="sortSelect" aria-label="정렬 기준">
-            <option value="latest">최신순</option>
-            <option value="likes">좋아요순</option>
-            <option value="comments">댓글순</option>
-            <option value="oldest">오래된순</option>
-          </select>
+
+          <div class="board-meta-control">
+            <div class="summary-line" aria-label="게시판 현황">
+              <span>글 <strong id="postCount">0</strong></span>
+              <span>댓글 <strong id="commentCount">0</strong></span>
+              <span>좋아요 <strong id="likeCount">0</strong></span>
+            </div>
+            <select id="sortSelect" aria-label="정렬 기준">
+              <option value="latest">최신순</option>
+              <option value="likes">좋아요순</option>
+              <option value="comments">댓글순</option>
+              <option value="oldest">오래된순</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="connection-state" id="connectionState" hidden>
+          게시판 연결 정보를 확인해주세요. <code>config.js</code>의 Supabase 주소와 Publishable key가 필요합니다.
+        </div>
+
+        <div class="post-list" id="postList"></div>
+        <div class="empty-state" id="emptyState" hidden>
+          <strong>아직 올라온 글이 없어요.</strong>
+          <p>첫 번째 운영 아이디어를 남겨주세요.</p>
         </div>
       </div>
 
-      <div class="connection-state" id="connectionState" hidden>
-        게시판 연결 정보를 확인해주세요. <code>config.js</code>의 Supabase 주소와 Publishable key가 필요합니다.
-      </div>
-
-      <div class="post-list" id="postList"></div>
-      <div class="empty-state" id="emptyState" hidden>
-        <strong>아직 올라온 글이 없어요.</strong>
-        <p>첫 번째 운영 아이디어를 남겨주세요.</p>
+      <div class="board-view-panel" id="summaryView" hidden>
+        <div class="auto-summary" id="autoSummary"></div>
       </div>
     </section>
   </main>
@@ -1500,7 +1739,7 @@ textarea { resize: vertical; min-height: 150px; }
   </div>
 
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
-  <div class="version-mark">ASRC v9</div>
+  <div class="version-mark">ASRC v10</div>
 
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.2.6/dist/purify.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -1542,6 +1781,8 @@ let likedCommentIds = new Set();
 let openedCommentIds = new Set();
 let openedReplyIds = new Set();
 let currentFilter = "all";
+let currentBoardView = "posts";
+let summaryCopyText = "";
 let passwordAction = null;
 let reloadTimer = null;
 let realtimePosts = null;
@@ -1845,6 +2086,303 @@ function renderPost(post) {
   `;
 }
 
+
+function plainTextFromHtml(html = "") {
+  const template = document.createElement("template");
+  template.innerHTML = String(html || "");
+  return String(template.content.textContent || "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function postPlainText(post) {
+  const rich = plainTextFromHtml(post.content_html || "");
+  return `${post.title || ""} ${rich || post.content || ""}`.replace(/\s+/g, " ").trim();
+}
+
+function compactExcerpt(value = "", limit = 86) {
+  const textValue = String(value || "").replace(/\s+/g, " ").trim();
+  if (textValue.length <= limit) return textValue;
+  return `${textValue.slice(0, limit).trim()}…`;
+}
+
+function postEngagement(post) {
+  const commentCount = commentsFor(post.id).length;
+  const likeCount = Number(post.likes || 0);
+  return {
+    comments: commentCount,
+    likes: likeCount,
+    score: likeCount * 2 + commentCount * 3 + (post.is_notice ? 12 : 0) + (isNewPost(post) ? 1 : 0)
+  };
+}
+
+function categorySummaryData() {
+  const categoryOrder = ["운영", "정기런", "행사", "친목", "안전", "기타"];
+  return categoryOrder
+    .map(category => {
+      const items = posts.filter(post => post.category === category);
+      const likes = items.reduce((sum, post) => sum + Number(post.likes || 0), 0);
+      const commentCount = items.reduce((sum, post) => sum + commentsFor(post.id).length, 0);
+      return {
+        category,
+        items,
+        likes,
+        comments: commentCount,
+        score: items.length * 2 + likes + commentCount * 1.5
+      };
+    })
+    .filter(group => group.items.length)
+    .sort((a, b) => b.items.length - a.items.length || b.score - a.score);
+}
+
+function extractSummaryKeywords(limit = 12) {
+  const stopWords = new Set([
+    "그리고", "하지만", "그래서", "또한", "대한", "관련", "부분", "정도", "생각", "의견", "이번", "우리", "제가", "저는", "하는", "하면", "해서", "되는", "있는", "없는", "같은", "좋을", "좋겠", "합니다", "있습니다", "것으로", "같습니다", "조금", "너무", "정말", "크루", "운영", "ASRC", "asrc", "게시판", "제안", "관련해서", "부분이", "통해", "위해", "대한", "정기런"
+  ]);
+  const counts = new Map();
+
+  for (const post of posts) {
+    const source = postPlainText(post)
+      .replace(/https?:\/\/\S+/gi, " ")
+      .replace(/[^0-9A-Za-z가-힣\s]/g, " ");
+
+    for (let token of source.split(/\s+/)) {
+      token = token.trim();
+      if (!token || token.length < 2 || token.length > 16) continue;
+      token = token.replace(/(은|는|이|가|을|를|에|에서|에게|으로|로|와|과|도|만|까지|부터|보다|처럼|이라는|라는|이라|라고|하고|하며|해서|인데|입니다|합니다|있습니다|없습니다)$/u, "");
+      if (token.length < 2 || stopWords.has(token)) continue;
+      counts.set(token, (counts.get(token) || 0) + 1);
+    }
+  }
+
+  return [...counts.entries()]
+    .filter(([, count]) => count >= 2)
+    .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0], "ko"))
+    .slice(0, limit)
+    .map(([word, count]) => ({ word, count }));
+}
+
+function summaryUpdatedText() {
+  return new Intl.DateTimeFormat("ko-KR", {
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(new Date());
+}
+
+function buildSummaryCopyText({ newPosts, topPosts, categories, keywords, dominantCategory }) {
+  const lines = [
+    "[ASRC 운영 의견 자동 요약]",
+    `전체 의견 ${posts.length}건 · 댓글 ${comments.length}건 · 최근 새 글 ${newPosts.length}건`,
+    dominantCategory ? `가장 많은 분야: ${dominantCategory.category} (${dominantCategory.items.length}건)` : "",
+    keywords.length ? `주요 키워드: ${keywords.map(item => `${item.word}(${item.count})`).join(", ")}` : "",
+    "",
+    "운영진 우선 확인 의견"
+  ].filter(Boolean);
+
+  topPosts.forEach((post, index) => {
+    const engagement = postEngagement(post);
+    lines.push(`${index + 1}. [${post.category}] ${post.title} · 좋아요 ${engagement.likes} · 댓글 ${engagement.comments}`);
+  });
+
+  if (categories.length) {
+    lines.push("", "분야별 현황");
+    categories.forEach(group => {
+      lines.push(`- ${group.category}: ${group.items.length}건 / 좋아요 ${group.likes} / 댓글 ${group.comments}`);
+    });
+  }
+
+  lines.push("", `업데이트: ${summaryUpdatedText()}`);
+  return lines.join("\n");
+}
+
+function renderAutoSummary() {
+  const container = $("#autoSummary");
+  if (!container) return;
+
+  const newPosts = posts.filter(isNewPost).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+  const categories = categorySummaryData();
+  const dominantCategory = categories[0] || null;
+  const keywords = extractSummaryKeywords();
+  const topPosts = [...posts]
+    .sort((a, b) => postEngagement(b).score - postEngagement(a).score || new Date(b.created_at) - new Date(a.created_at))
+    .slice(0, 5);
+  const notices = posts.filter(post => post.is_notice);
+  const totalLikes = posts.reduce((sum, post) => sum + Number(post.likes || 0), 0) + comments.reduce((sum, comment) => sum + Number(comment.likes || 0), 0);
+  const mostEngaged = topPosts[0] || null;
+
+  $("#summaryNewCount").textContent = newPosts.length;
+
+  if (!posts.length) {
+    summaryCopyText = "[ASRC 운영 의견 자동 요약]\n아직 등록된 의견이 없습니다.";
+    container.innerHTML = `
+      <div class="summary-empty-card">
+        <strong>요약할 의견이 아직 없어요.</strong>
+        <p>게시글이 올라오면 이 화면에 자동으로 정리됩니다.</p>
+      </div>
+    `;
+    return;
+  }
+
+  const overviewParts = [
+    `현재 총 <strong>${posts.length}건</strong>의 의견이 등록되어 있습니다.`,
+    dominantCategory ? `<strong>${escapeHtml(dominantCategory.category)}</strong> 분야가 ${dominantCategory.items.length}건으로 가장 많습니다.` : "",
+    newPosts.length ? `최근 ${NEW_POST_HOURS}시간 동안 새 글은 <strong>${newPosts.length}건</strong>입니다.` : `최근 ${NEW_POST_HOURS}시간 내 새 글은 없습니다.`,
+    mostEngaged ? `현재 반응이 가장 높은 의견은 <strong>“${escapeHtml(mostEngaged.title)}”</strong>입니다.` : ""
+  ].filter(Boolean);
+
+  summaryCopyText = buildSummaryCopyText({ newPosts, topPosts, categories, keywords, dominantCategory });
+
+  container.innerHTML = `
+    <div class="summary-head-card">
+      <div class="summary-head-copy">
+        <span class="section-label">AUTO SUMMARY</span>
+        <h3>의견 한눈에 보기</h3>
+        <p>게시글·댓글·좋아요를 기준으로 자동 정리됩니다.</p>
+      </div>
+      <div class="summary-head-actions">
+        <button class="summary-subtle-button" type="button" id="refreshSummaryBtn">새로고침</button>
+        <button class="summary-subtle-button" type="button" id="copySummaryBtn">요약 복사</button>
+      </div>
+    </div>
+
+    <div class="summary-metrics">
+      <div class="summary-metric"><span>전체 의견</span><strong>${posts.length}건</strong></div>
+      <div class="summary-metric"><span>최근 새 글</span><strong>${newPosts.length}건</strong></div>
+      <div class="summary-metric"><span>가장 많은 분야</span><strong>${dominantCategory ? escapeHtml(dominantCategory.category) : "-"}</strong></div>
+      <div class="summary-metric"><span>전체 반응</span><strong>${totalLikes + comments.length}회</strong></div>
+    </div>
+
+    <div class="summary-overview-card">
+      <h4 class="summary-card-title">전체 흐름</h4>
+      <p class="summary-overview-text">${overviewParts.join(" ")}</p>
+      <div class="summary-updated">마지막 자동 정리 · ${summaryUpdatedText()}</div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-section-card">
+        <h4 class="summary-card-title">운영진 우선 확인</h4>
+        <div class="summary-priority-list">
+          ${topPosts.map((post, index) => {
+            const engagement = postEngagement(post);
+            return `
+              <a class="summary-priority-item" href="#post-${post.id}" data-summary-post-id="${post.id}">
+                <span class="summary-rank">${index + 1}</span>
+                <span class="summary-item-copy">
+                  <strong>${post.is_notice ? "[공지] " : ""}${escapeHtml(post.title)}</strong>
+                  <p>${escapeHtml(compactExcerpt(postPlainText(post).replace(post.title || "", ""), 95))}</p>
+                </span>
+                <span class="summary-item-stats">♡ ${engagement.likes} · 댓글 ${engagement.comments}</span>
+              </a>
+            `;
+          }).join("")}
+        </div>
+      </div>
+
+      <div class="summary-section-card">
+        <h4 class="summary-card-title">자주 나온 키워드</h4>
+        ${keywords.length
+          ? `<div class="keyword-cloud">${keywords.map(item => `<span class="keyword-chip">${escapeHtml(item.word)} <b>${item.count}</b></span>`).join("")}</div>`
+          : '<p class="summary-note">같은 주제가 두 번 이상 등장하면 이곳에 주요 키워드로 표시됩니다.</p>'}
+      </div>
+    </div>
+
+    <div class="summary-grid">
+      <div class="summary-section-card">
+        <h4 class="summary-card-title">분야별 정리</h4>
+        <div class="summary-category-list">
+          ${categories.map(group => `
+            <div class="summary-category-item">
+              <div class="summary-category-head">
+                <strong>${escapeHtml(group.category)} · ${group.items.length}건</strong>
+                <span>좋아요 ${group.likes} · 댓글 ${group.comments}</span>
+              </div>
+              <ul class="summary-category-titles">
+                ${group.items.slice(0, 3).map(post => `<li>${escapeHtml(post.title)}</li>`).join("")}
+              </ul>
+            </div>
+          `).join("")}
+        </div>
+      </div>
+
+      <div class="summary-section-card">
+        <h4 class="summary-card-title">새로 올라온 의견</h4>
+        <div class="summary-new-list">
+          ${newPosts.length
+            ? newPosts.slice(0, 6).map(post => `
+              <a class="summary-new-item" href="#post-${post.id}" data-summary-post-id="${post.id}">
+                <span class="summary-rank">N</span>
+                <span class="summary-item-copy"><strong>${escapeHtml(post.title)}</strong><p>${escapeHtml(post.category)} · ${formatDate(post.created_at)}</p></span>
+                <span class="summary-item-stats">♡ ${Number(post.likes || 0)}</span>
+              </a>
+            `).join("")
+            : '<p class="summary-note">최근 72시간 동안 새로 등록된 의견이 없습니다.</p>'}
+        </div>
+      </div>
+    </div>
+
+    ${notices.length ? `
+      <div class="summary-section-card">
+        <h4 class="summary-card-title">공지사항</h4>
+        <div class="summary-new-list">
+          ${notices.map(post => `
+            <a class="summary-new-item" href="#post-${post.id}" data-summary-post-id="${post.id}">
+              <span class="summary-rank">!</span>
+              <span class="summary-item-copy"><strong>${escapeHtml(post.title)}</strong><p>${escapeHtml(compactExcerpt(postPlainText(post), 110))}</p></span>
+              <span class="summary-item-stats">${formatDate(post.created_at)}</span>
+            </a>
+          `).join("")}
+        </div>
+      </div>
+    ` : ""}
+
+    <p class="summary-note">이 요약은 별도 유료 AI를 사용하지 않고 현재 게시물의 제목·본문·분류·좋아요·댓글을 바탕으로 브라우저에서 자동 생성됩니다. 게시물 내용이 바뀌면 함께 갱신됩니다.</p>
+  `;
+
+  $("#refreshSummaryBtn")?.addEventListener("click", () => {
+    renderAutoSummary();
+    showToast("요약을 새로 정리했습니다.");
+  });
+
+  $("#copySummaryBtn")?.addEventListener("click", async () => {
+    try {
+      await navigator.clipboard.writeText(summaryCopyText);
+      showToast("요약을 복사했습니다.");
+    } catch {
+      const area = document.createElement("textarea");
+      area.value = summaryCopyText;
+      document.body.appendChild(area);
+      area.select();
+      document.execCommand("copy");
+      area.remove();
+      showToast("요약을 복사했습니다.");
+    }
+  });
+
+  $$('[data-summary-post-id]', container).forEach(link => link.addEventListener("click", event => {
+    event.preventDefault();
+    const postId = link.dataset.summaryPostId;
+    showBoardView("posts");
+    requestAnimationFrame(() => {
+      const target = $(`#post-${postId}`);
+      target?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }));
+}
+
+function showBoardView(view) {
+  currentBoardView = view === "summary" ? "summary" : "posts";
+  $("#postsView").hidden = currentBoardView !== "posts";
+  $("#summaryView").hidden = currentBoardView !== "summary";
+  $$('[data-board-view]').forEach(button => {
+    const active = button.dataset.boardView === currentBoardView;
+    button.classList.toggle("active", active);
+    button.setAttribute("aria-selected", String(active));
+  });
+  if (currentBoardView === "summary") renderAutoSummary();
+}
+
 function renderBoard() {
   const list = sortedPosts();
   $("#postList").innerHTML = list.map(renderPost).join("");
@@ -1854,6 +2392,7 @@ function renderBoard() {
   $("#likeCount").textContent =
     posts.reduce((sum, post) => sum + Number(post.likes || 0), 0) +
     comments.reduce((sum, comment) => sum + Number(comment.likes || 0), 0);
+  renderAutoSummary();
 }
 
 async function loadBoard({ silent = false } = {}) {
@@ -2388,6 +2927,10 @@ $("#addLinkBtn").addEventListener("click", () => {
 $$('[data-close-post]').forEach(element => element.addEventListener("click", closePostModal));
 $$('[data-close-password]').forEach(element => element.addEventListener("click", closePasswordModal));
 
+$$('[data-board-view]').forEach(button => button.addEventListener("click", () => {
+  showBoardView(button.dataset.boardView);
+}));
+
 $$('.filter').forEach(button => button.addEventListener("click", () => {
   currentFilter = button.dataset.filter;
   $$('.filter').forEach(item => item.classList.toggle("active", item === button));
@@ -2446,6 +2989,7 @@ if (!db && ["localhost", "127.0.0.1"].includes(location.hostname)) {
   openedCommentIds.add("preview-notice");
 }
 
+showBoardView("posts");
 renderBoard();
 loadBoard();
 startRealtime();
