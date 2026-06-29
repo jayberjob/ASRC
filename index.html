@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Montserrat:wght@600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="style-v6.css?v=6" />
+  <link rel="stylesheet" href="style-v7.css?v=7" />
 </head>
 <body>
   <header class="site-header">
@@ -169,6 +169,19 @@
           <textarea id="postContent" maxlength="1000" rows="7" placeholder="생각이나 제안을 자유롭게 적어주세요." required></textarea>
           <small class="char-count"><span id="postCharCount">0</span>/1000</small>
         </label>
+        <div class="notice-option">
+          <label class="notice-check">
+            <input id="isNotice" type="checkbox" />
+            <span class="notice-switch" aria-hidden="true"></span>
+            <span>
+              <strong>공지사항으로 등록</strong>
+              <small>중요한 글은 게시판 가장 위에 고정됩니다.</small>
+            </span>
+          </label>
+          <label class="notice-password" id="noticePasswordWrap" hidden>공지 비밀번호
+            <input id="noticePassword" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="운영진 비밀번호 4자리" />
+          </label>
+        </div>
         <label>4자리 비밀번호
           <input id="postPassword" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="수정·삭제할 때 사용" required />
         </label>
@@ -193,7 +206,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=6"></script>
-  <script src="app-v6.js?v=6"></script>
+  <script src="config.js?v=7"></script>
+  <script src="app-v7.js?v=7"></script>
 </body>
 </html>
