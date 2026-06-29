@@ -2178,7 +2178,7 @@ function buildSummaryCopyText({ newPosts, topPosts, categories, keywords, domina
     dominantCategory ? `가장 많은 분야: ${dominantCategory.category} (${dominantCategory.items.length}건)` : "",
     keywords.length ? `주요 키워드: ${keywords.map(item => `${item.word}(${item.count})`).join(", ")}` : "",
     "",
-    "운영진 우선 확인 의견"
+    "좋아요 순"
   ].filter(Boolean);
 
   topPosts.forEach((post, index) => {
@@ -2206,7 +2206,7 @@ function renderAutoSummary() {
   const dominantCategory = categories[0] || null;
   const keywords = extractSummaryKeywords();
   const topPosts = [...posts]
-    .sort((a, b) => postEngagement(b).score - postEngagement(a).score || new Date(b.created_at) - new Date(a.created_at))
+    .sort((a, b) => Number(b.likes || 0) - Number(a.likes || 0) || commentsFor(b.id).length - commentsFor(a.id).length || new Date(b.created_at) - new Date(a.created_at))
     .slice(0, 5);
   const notices = posts.filter(post => post.is_notice);
   const totalLikes = posts.reduce((sum, post) => sum + Number(post.likes || 0), 0) + comments.reduce((sum, comment) => sum + Number(comment.likes || 0), 0);
@@ -2229,7 +2229,7 @@ function renderAutoSummary() {
     `현재 총 <strong>${posts.length}건</strong>의 의견이 등록되어 있습니다.`,
     dominantCategory ? `<strong>${escapeHtml(dominantCategory.category)}</strong> 분야가 ${dominantCategory.items.length}건으로 가장 많습니다.` : "",
     newPosts.length ? `최근 ${NEW_POST_HOURS}시간 동안 새 글은 <strong>${newPosts.length}건</strong>입니다.` : `최근 ${NEW_POST_HOURS}시간 내 새 글은 없습니다.`,
-    mostEngaged ? `현재 반응이 가장 높은 의견은 <strong>“${escapeHtml(mostEngaged.title)}”</strong>입니다.` : ""
+    mostEngaged ? `현재 좋아요가 가장 많은 의견은 <strong>“${escapeHtml(mostEngaged.title)}”</strong>입니다.` : ""
   ].filter(Boolean);
 
   summaryCopyText = buildSummaryCopyText({ newPosts, topPosts, categories, keywords, dominantCategory });
@@ -2262,7 +2262,7 @@ function renderAutoSummary() {
 
     <div class="summary-grid">
       <div class="summary-section-card">
-        <h4 class="summary-card-title">운영진 우선 확인</h4>
+        <h4 class="summary-card-title">좋아요 순</h4>
         <div class="summary-priority-list">
           ${topPosts.map((post, index) => {
             const engagement = postEngagement(post);
@@ -2273,7 +2273,7 @@ function renderAutoSummary() {
                   <strong>${post.is_notice ? "[공지] " : ""}${escapeHtml(post.title)}</strong>
                   <p>${escapeHtml(compactExcerpt(postPlainText(post).replace(post.title || "", ""), 95))}</p>
                 </span>
-                <span class="summary-item-stats">♡ ${engagement.likes} · 댓글 ${engagement.comments}</span>
+                <span class="summary-item-stats">♥ ${engagement.likes} · 댓글 ${engagement.comments}</span>
               </a>
             `;
           }).join("")}
