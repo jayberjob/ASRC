@@ -4,8 +4,11 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta name="description" content="ASRC 운영 아이디어를 함께 나누는 게시판" />
-  <title>ASRC · 같이 달려요</title>
-  <link rel="stylesheet" href="style-v5.css?v=5" />
+  <title>ASRC · 함께 달려요</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Montserrat:wght@600;700;800;900&family=Noto+Sans+KR:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="style-v6.css?v=6" />
 </head>
 <body>
   <header class="site-header">
@@ -25,7 +28,7 @@
     <section class="hero-shell">
       <div class="hero-copy">
         <span class="eyebrow">ASRC CREW BOARD</span>
-        <h1>ASRC,<br><em>같이 달려요.</em></h1>
+        <h1><span>ASRC</span><br><em>함께 달려요.</em></h1>
         <p>운영 아이디어를 남기고, 좋아요와 댓글로 편하게 이야기해요.</p>
         <div class="hero-actions">
           <button class="btn btn-primary" id="heroWriteBtn" type="button">글 남기기</button>
@@ -36,17 +39,37 @@
       <div class="hero-art" aria-hidden="true">
         <div class="hero-art-top">
           <span>ANSAN RUNNING CREW</span>
-          <span>RUN TOGETHER</span>
+          <span>WE RUN TOGETHER</span>
         </div>
         <div class="hero-run-word">RUN</div>
+        <svg class="runner-illustration" viewBox="0 0 640 420" role="img" aria-label="달리는 사람을 표현한 그래픽">
+          <defs>
+            <linearGradient id="runnerStroke" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#ffffff" />
+              <stop offset="100%" stop-color="#9dc5ff" />
+            </linearGradient>
+          </defs>
+          <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M52 316 C190 260 356 252 596 292" stroke="rgba(255,255,255,.26)" stroke-width="5" />
+            <path d="M24 352 C210 296 402 302 620 338" stroke="rgba(255,255,255,.14)" stroke-width="3" />
+            <path d="M108 132 H238" stroke="rgba(158,198,255,.52)" stroke-width="9" />
+            <path d="M72 166 H206" stroke="rgba(158,198,255,.28)" stroke-width="5" />
+            <circle cx="410" cy="88" r="31" fill="rgba(255,255,255,.96)" stroke="none" />
+            <path d="M398 126 C365 154 348 190 355 229 C360 257 382 269 409 253 C435 237 449 199 443 163 C438 137 421 123 398 126 Z" fill="rgba(255,255,255,.96)" stroke="none" />
+            <path d="M374 150 C331 151 299 171 274 207" stroke="url(#runnerStroke)" stroke-width="21" />
+            <path d="M432 154 C462 168 491 191 512 220" stroke="url(#runnerStroke)" stroke-width="19" />
+            <path d="M382 251 C340 271 302 304 266 349" stroke="url(#runnerStroke)" stroke-width="23" />
+            <path d="M416 252 C454 281 495 304 548 316" stroke="url(#runnerStroke)" stroke-width="23" />
+            <path d="M242 351 H288" stroke="#ffffff" stroke-width="14" />
+            <path d="M538 317 H588" stroke="#ffffff" stroke-width="14" />
+          </g>
+        </svg>
         <div class="lane lane-1"></div>
         <div class="lane lane-2"></div>
         <div class="lane lane-3"></div>
-        <div class="pace-chip">5:30 / KM</div>
-        <div class="distance-chip">10 KM</div>
         <div class="hero-art-bottom">
           <strong>ASRC</strong>
-          <span>MOVE · SHARE · TOGETHER</span>
+          <span>RUN · TALK · SHARE</span>
         </div>
       </div>
     </section>
@@ -170,7 +193,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js?v=5"></script>
-  <script src="app-v5.js?v=5"></script>
+  <script src="config.js?v=6"></script>
+  <script src="app-v6.js?v=6"></script>
 </body>
 </html>
