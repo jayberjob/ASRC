@@ -1,0 +1,739 @@
+const BOARD_ID = "operations";
+const NEW_POST_HOURS = 72;
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
+
+const config = window.ASRC_CONFIG || {};
+const supabaseUrl = String(config.SUPABASE_URL || "").trim();
+const supabaseKey = String(
+  config.SUPABASE_PUBLISHABLE_KEY ||
+  config.SUPABASE_ANON_KEY ||
+  config.SUPABASE_KEY ||
+  ""
+).trim();
+
+const configured = Boolean(
+  supabaseUrl.startsWith("https://") &&
+  supabaseKey.length > 20 &&
+  !supabaseUrl.includes("YOUR_PROJECT_ID") &&
+  !supabaseKey.includes("YOUR_KEY") &&
+  !supabaseKey.includes("실제키")
+);
+
+const db = configured && window.supabase
+  ? window.supabase.createClient(supabaseUrl, supabaseKey)
+  : null;
+
+let posts = [];
+let comments = [];
+let likedPostIds = new Set();
+let likedCommentIds = new Set();
+let openedCommentIds = new Set();
+let openedReplyIds = new Set();
+let currentFilter = "all";
+let passwordAction = null;
+let reloadTimer = null;
+let realtimePosts = null;
+let realtimeComments = null;
+let toastTimer = null;
+
+function createUuid() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  const bytes = new Uint8Array(16);
+  window.crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map(byte => byte.toString(16).padStart(2, "0"));
+  return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10).join("")}`;
+}
+
+function getVoterId() {
+  const key = "asrc_board_voter_id";
+  let id = localStorage.getItem(key);
+  if (!id) {
+    id = createUuid();
+    localStorage.setItem(key, id);
+  }
+  return id;
+}
+
+function escapeHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
+}
+
+function formatDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
+  return new Intl.DateTimeFormat("ko-KR", {
+    year: "2-digit",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
+}
+
+function isNewPost(post) {
+  const created = new Date(post.created_at).getTime();
+  if (Number.isNaN(created)) return false;
+  return Date.now() - created <= NEW_POST_HOURS * 60 * 60 * 1000;
+}
+
+function showToast(message) {
+  const toast = $("#toast");
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.classList.add("show");
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 2500);
+}
+
+function readableError(error, fallback) {
+  const message = error?.message || "";
+  if (message.includes("create_board_post_v7") ||
+      message.includes("create_board_comment_v7") ||
+      message.includes("get_my_liked_comments_v7") ||
+      message.includes("parent_comment_id") ||
+      message.includes("is_notice")) {
+    return "Supabase에서 supabase_features_v7.sql을 먼저 실행해주세요.";
+  }
+  if (message.includes("Could not find the function") || message.includes("schema cache")) {
+    return "Supabase에서 v7 기능 추가 SQL을 먼저 실행해주세요.";
+  }
+  return message || fallback;
+}
+
+function commentsFor(postId) {
+  return comments.filter(comment => comment.opinion_id === postId);
+}
+
+function sortedPosts() {
+  const sort = $("#sortSelect").value;
+  const filtered = currentFilter === "all"
+    ? [...posts]
+    : posts.filter(post => post.category === currentFilter);
+
+  return filtered.sort((a, b) => {
+    const noticeOrder = Number(Boolean(b.is_notice)) - Number(Boolean(a.is_notice));
+    if (noticeOrder !== 0) return noticeOrder;
+    if (sort === "likes") return Number(b.likes || 0) - Number(a.likes || 0) || new Date(b.created_at) - new Date(a.created_at);
+    if (sort === "comments") return commentsFor(b.id).length - commentsFor(a.id).length || new Date(b.created_at) - new Date(a.created_at);
+    if (sort === "oldest") return new Date(a.created_at) - new Date(b.created_at);
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+}
+
+function buildCommentTree(postComments) {
+  const children = new Map();
+  const ids = new Set(postComments.map(comment => comment.id));
+
+  for (const comment of postComments) {
+    const parentId = comment.parent_comment_id && ids.has(comment.parent_comment_id)
+      ? comment.parent_comment_id
+      : null;
+    if (!children.has(parentId)) children.set(parentId, []);
+    children.get(parentId).push(comment);
+  }
+
+  for (const list of children.values()) {
+    list.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+  }
+  return children;
+}
+
+function renderReplyForm(postId, commentId) {
+  if (!openedReplyIds.has(commentId)) return "";
+  return `
+    <form class="reply-form" data-post-id="${postId}" data-parent-comment-id="${commentId}">
+      <div class="reply-form-label">답글 작성</div>
+      <div class="reply-form-fields">
+        <input name="author" maxlength="12" value="${escapeHtml(localStorage.getItem("asrc_author_name") || "")}" placeholder="이름" aria-label="답글 작성자 이름" required />
+        <input name="content" maxlength="300" placeholder="답글을 입력하세요" aria-label="답글 내용" required />
+        <input name="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="비밀번호 4자리" aria-label="답글 비밀번호" required />
+        <button class="btn btn-primary" type="submit">등록</button>
+      </div>
+    </form>
+  `;
+}
+
+function renderComment(comment, postId, childrenMap, depth = 0, visited = new Set()) {
+  if (visited.has(comment.id) || depth > 8) return "";
+  const nextVisited = new Set(visited);
+  nextVisited.add(comment.id);
+  const childComments = childrenMap.get(comment.id) || [];
+  const liked = likedCommentIds.has(comment.id);
+
+  return `
+    <div class="comment-thread ${depth ? "is-reply" : ""}" style="--reply-depth:${Math.min(depth, 4)}">
+      <article class="comment-item">
+        <div class="comment-main">
+          <div class="comment-head">
+            <strong>${escapeHtml(comment.author_name)}</strong>
+            ${depth ? '<span class="reply-label">답글</span>' : ""}
+            <span>${formatDate(comment.created_at)}</span>
+          </div>
+          <p class="comment-text">${escapeHtml(comment.content)}</p>
+          <div class="comment-actions">
+            <button class="comment-action ${liked ? "liked" : ""}" type="button" data-action="like-comment" data-comment-id="${comment.id}">
+              ${liked ? "♥" : "♡"} <span>${Number(comment.likes || 0)}</span>
+            </button>
+            <button class="comment-action" type="button" data-action="toggle-reply" data-post-id="${postId}" data-comment-id="${comment.id}">답글</button>
+            <button class="comment-action danger" type="button" data-action="delete-comment" data-comment-id="${comment.id}">삭제</button>
+          </div>
+        </div>
+      </article>
+      ${renderReplyForm(postId, comment.id)}
+      ${childComments.length ? `
+        <div class="comment-replies">
+          ${childComments.map(child => renderComment(child, postId, childrenMap, depth + 1, nextVisited)).join("")}
+        </div>
+      ` : ""}
+    </div>
+  `;
+}
+
+function renderPost(post) {
+  const postComments = commentsFor(post.id);
+  const childrenMap = buildCommentTree(postComments);
+  const rootComments = childrenMap.get(null) || [];
+  const commentsOpen = openedCommentIds.has(post.id);
+  const liked = likedPostIds.has(post.id);
+  const initial = String(post.nickname || "A").trim().charAt(0).toUpperCase();
+  const newBadge = isNewPost(post) ? '<span class="new-badge">NEW</span>' : "";
+  const noticeBadge = post.is_notice ? '<span class="notice-badge">공지</span>' : "";
+
+  return `
+    <article class="post-card ${post.is_notice ? "notice-post" : ""}" id="post-${post.id}" data-post-id="${post.id}">
+      <div class="post-top">
+        <div class="post-author-block">
+          <div class="author-avatar">${escapeHtml(initial || "A")}</div>
+          <div>
+            <div class="post-meta">
+              ${noticeBadge}
+              <span class="category-chip">${escapeHtml(post.category)}</span>
+              ${newBadge}
+              <span class="post-author">${escapeHtml(post.nickname)}</span>
+              <span>${formatDate(post.created_at)}</span>
+              ${post.updated_at && post.updated_at !== post.created_at ? "<span>수정됨</span>" : ""}
+            </div>
+            <h3 class="post-title">${escapeHtml(post.title)}</h3>
+            <p class="post-content">${escapeHtml(post.content)}</p>
+          </div>
+        </div>
+        <div class="post-menu">
+          <button class="icon-btn" type="button" data-action="edit-post" data-post-id="${post.id}" aria-label="글 수정">수정</button>
+          <button class="icon-btn" type="button" data-action="delete-post" data-post-id="${post.id}" aria-label="글 삭제">삭제</button>
+        </div>
+      </div>
+
+      <div class="post-actions">
+        <button class="action-btn ${liked ? "liked" : ""}" type="button" data-action="like" data-post-id="${post.id}">
+          <span>${liked ? "♥" : "♡"}</span> 좋아요 <strong>${Number(post.likes || 0)}</strong>
+        </button>
+        <button class="action-btn" type="button" data-action="toggle-comments" data-post-id="${post.id}" aria-expanded="${commentsOpen}">
+          <span>💬</span> 댓글 <strong>${postComments.length}</strong>
+        </button>
+        <button class="action-btn share" type="button" data-action="share" data-post-id="${post.id}">
+          <span>↗</span> 공유
+        </button>
+      </div>
+
+      <div class="comments-wrap" ${commentsOpen ? "" : "hidden"}>
+        <div class="comments-panel">
+          <div class="comment-list">
+            ${rootComments.length
+              ? rootComments.map(comment => renderComment(comment, post.id, childrenMap)).join("")
+              : '<p class="comment-empty">첫 댓글을 남겨보세요.</p>'}
+          </div>
+          <form class="comment-form" data-post-id="${post.id}">
+            <input name="author" maxlength="12" value="${escapeHtml(localStorage.getItem("asrc_author_name") || "")}" placeholder="이름" aria-label="댓글 작성자 이름" required />
+            <input name="content" maxlength="300" placeholder="댓글을 입력하세요" aria-label="댓글 내용" required />
+            <input name="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="비밀번호 4자리" aria-label="댓글 비밀번호" required />
+            <button class="btn btn-primary" type="submit">등록</button>
+          </form>
+        </div>
+      </div>
+    </article>
+  `;
+}
+
+function renderBoard() {
+  const list = sortedPosts();
+  $("#postList").innerHTML = list.map(renderPost).join("");
+  $("#emptyState").hidden = list.length > 0;
+  $("#postCount").textContent = posts.length;
+  $("#commentCount").textContent = comments.length;
+  $("#likeCount").textContent =
+    posts.reduce((sum, post) => sum + Number(post.likes || 0), 0) +
+    comments.reduce((sum, comment) => sum + Number(comment.likes || 0), 0);
+  focusSharedPost();
+}
+
+async function loadBoard({ silent = false } = {}) {
+  if (!db) {
+    $("#connectionState").hidden = false;
+    renderBoard();
+    return;
+  }
+
+  $("#connectionState").hidden = true;
+
+  try {
+    const [postsResult, commentsResult, postLikesResult, commentLikesResult] = await Promise.all([
+      db.from("opinions")
+        .select("id, meeting_id, nickname, category, title, content, likes, is_notice, created_at, updated_at")
+        .eq("meeting_id", BOARD_ID)
+        .order("created_at", { ascending: false }),
+      db.from("comments")
+        .select("id, opinion_id, parent_comment_id, author_name, content, likes, created_at")
+        .order("created_at", { ascending: true }),
+      db.rpc("get_my_liked_opinions", {
+        p_voter_id: getVoterId(),
+        p_meeting_id: BOARD_ID
+      }),
+      db.rpc("get_my_liked_comments_v7", {
+        p_voter_id: getVoterId(),
+        p_meeting_id: BOARD_ID
+      })
+    ]);
+
+    if (postsResult.error) throw postsResult.error;
+    if (commentsResult.error) throw commentsResult.error;
+    if (postLikesResult.error) throw postLikesResult.error;
+    if (commentLikesResult.error) throw commentLikesResult.error;
+
+    posts = postsResult.data || [];
+    const postIds = new Set(posts.map(post => post.id));
+    comments = (commentsResult.data || []).filter(comment => postIds.has(comment.opinion_id));
+    likedPostIds = new Set((postLikesResult.data || []).map(item => item.opinion_id));
+    likedCommentIds = new Set((commentLikesResult.data || []).map(item => item.comment_id));
+    renderBoard();
+  } catch (error) {
+    console.error(error);
+    $("#connectionState").hidden = false;
+    $("#connectionState").textContent = readableError(error, "게시판 데이터를 불러오지 못했습니다.");
+    if (!silent) showToast(readableError(error, "게시판을 불러오지 못했습니다."));
+  }
+}
+
+function updateNoticePinVisibility() {
+  const originalNotice = $("#isNotice").dataset.originalNotice === "true";
+  const selectedNotice = $("#isNotice").checked;
+  const stateChanged = originalNotice !== selectedNotice;
+  const shouldShow = selectedNotice || originalNotice;
+  $("#noticePasswordWrap").hidden = !shouldShow;
+  $("#noticePassword").required = stateChanged;
+}
+
+function openPostModal(post = null) {
+  $("#postForm").reset();
+  $("#editingPostId").value = post?.id || "";
+  $("#postModalTitle").textContent = post ? "글 수정" : "새 글 작성";
+  $("#postSubmitBtn").textContent = post ? "수정하기" : "등록하기";
+  $("#authorName").value = post?.nickname || localStorage.getItem("asrc_author_name") || "";
+  $("#category").value = post?.category || "운영";
+  $("#postTitle").value = post?.title || "";
+  $("#postContent").value = post?.content || "";
+  $("#postPassword").value = "";
+  $("#noticePassword").value = "";
+  $("#isNotice").checked = Boolean(post?.is_notice);
+  $("#isNotice").dataset.originalNotice = String(Boolean(post?.is_notice));
+  updateNoticePinVisibility();
+  updatePostCharCount();
+  $("#postModal").classList.add("open");
+  $("#postModal").setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => $("#authorName").focus(), 50);
+}
+
+function closePostModal() {
+  $("#postModal").classList.remove("open");
+  $("#postModal").setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+
+function openPasswordModal(action) {
+  passwordAction = action;
+  $("#passwordForm").reset();
+  $("#passwordTitle").textContent = action.type === "delete-comment" ? "댓글 삭제" : "글 삭제";
+  $("#passwordHelp").textContent = "작성할 때 설정한 4자리 비밀번호를 입력해주세요.";
+  $("#passwordModal").classList.add("open");
+  $("#passwordModal").setAttribute("aria-hidden", "false");
+  document.body.style.overflow = "hidden";
+  setTimeout(() => $("#passwordCheck").focus(), 50);
+}
+
+function closePasswordModal() {
+  passwordAction = null;
+  $("#passwordModal").classList.remove("open");
+  $("#passwordModal").setAttribute("aria-hidden", "true");
+  document.body.style.overflow = "";
+}
+
+function updatePostCharCount() {
+  $("#postCharCount").textContent = $("#postContent").value.length;
+}
+
+async function submitPost(event) {
+  event.preventDefault();
+  if (!db) return showToast("Supabase 연결 설정을 먼저 완료해주세요.");
+
+  const id = $("#editingPostId").value;
+  const author = $("#authorName").value.trim();
+  const category = $("#category").value;
+  const title = $("#postTitle").value.trim();
+  const content = $("#postContent").value.trim();
+  const password = $("#postPassword").value.trim();
+  const isNotice = $("#isNotice").checked;
+  const noticePassword = $("#noticePassword").value.trim();
+  const originalNotice = $("#isNotice").dataset.originalNotice === "true";
+  const noticeChanged = originalNotice !== isNotice;
+  const button = $("#postSubmitBtn");
+
+  if (!/^\d{4}$/.test(password)) return showToast("비밀번호는 숫자 4자리로 입력해주세요.");
+  if (noticeChanged && !/^\d{4}$/.test(noticePassword)) {
+    return showToast("공지 설정을 바꾸려면 운영진 공지 비밀번호 4자리가 필요합니다.");
+  }
+
+  button.disabled = true;
+  button.textContent = id ? "수정 중..." : "등록 중...";
+
+  try {
+    let result;
+    if (id) {
+      result = await db.rpc("update_board_post_v7", {
+        p_id: id,
+        p_password: password,
+        p_nickname: author,
+        p_category: category,
+        p_title: title,
+        p_content: content,
+        p_is_notice: isNotice,
+        p_notice_password: noticePassword
+      });
+      if (result.error) throw result.error;
+      if (!result.data) throw new Error("비밀번호가 맞지 않습니다.");
+    } else {
+      result = await db.rpc("create_board_post_v7", {
+        p_meeting_id: BOARD_ID,
+        p_nickname: author,
+        p_category: category,
+        p_title: title,
+        p_content: content,
+        p_password: password,
+        p_is_notice: isNotice,
+        p_notice_password: noticePassword
+      });
+      if (result.error) throw result.error;
+    }
+
+    localStorage.setItem("asrc_author_name", author);
+    closePostModal();
+    await loadBoard({ silent: true });
+    showToast(id ? "글을 수정했습니다." : "글을 등록했습니다.");
+  } catch (error) {
+    console.error(error);
+    showToast(readableError(error, id ? "글을 수정하지 못했습니다." : "글을 등록하지 못했습니다."));
+  } finally {
+    button.disabled = false;
+    button.textContent = id ? "수정하기" : "등록하기";
+  }
+}
+
+async function toggleLike(postId, button) {
+  if (!db) return showToast("Supabase 연결 설정을 먼저 완료해주세요.");
+  button.disabled = true;
+  try {
+    const { data, error } = await db.rpc("toggle_opinion_like", {
+      p_opinion_id: postId,
+      p_voter_id: getVoterId()
+    });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    const post = posts.find(item => item.id === postId);
+    if (post && row) post.likes = Number(row.like_count || 0);
+    if (row?.is_liked) likedPostIds.add(postId);
+    else likedPostIds.delete(postId);
+    renderBoard();
+  } catch (error) {
+    console.error(error);
+    showToast(readableError(error, "좋아요를 반영하지 못했습니다."));
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function toggleCommentLike(commentId, button) {
+  if (!db) return showToast("Supabase 연결 설정을 먼저 완료해주세요.");
+  button.disabled = true;
+  try {
+    const { data, error } = await db.rpc("toggle_comment_like_v7", {
+      p_comment_id: commentId,
+      p_voter_id: getVoterId()
+    });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    const comment = comments.find(item => item.id === commentId);
+    if (comment && row) comment.likes = Number(row.like_count || 0);
+    if (row?.is_liked) likedCommentIds.add(commentId);
+    else likedCommentIds.delete(commentId);
+    renderBoard();
+  } catch (error) {
+    console.error(error);
+    showToast(readableError(error, "댓글 좋아요를 반영하지 못했습니다."));
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function submitComment(form) {
+  if (!db) return showToast("Supabase 연결 설정을 먼저 완료해주세요.");
+  const postId = form.dataset.postId;
+  const parentCommentId = form.dataset.parentCommentId || null;
+  const author = form.elements.author.value.trim();
+  const content = form.elements.content.value.trim();
+  const password = form.elements.password.value.trim();
+  const button = $("button[type='submit']", form);
+
+  if (!/^\d{4}$/.test(password)) return showToast("댓글 비밀번호는 숫자 4자리로 입력해주세요.");
+
+  button.disabled = true;
+  button.textContent = "등록 중";
+  try {
+    const { error } = await db.rpc("create_board_comment_v7", {
+      p_opinion_id: postId,
+      p_parent_comment_id: parentCommentId,
+      p_author_name: author,
+      p_content: content,
+      p_password: password
+    });
+    if (error) throw error;
+
+    localStorage.setItem("asrc_author_name", author);
+    openedCommentIds.add(postId);
+    if (parentCommentId) openedReplyIds.delete(parentCommentId);
+    await loadBoard({ silent: true });
+    showToast(parentCommentId ? "답글을 등록했습니다." : "댓글을 등록했습니다.");
+  } catch (error) {
+    console.error(error);
+    showToast(readableError(error, "댓글을 등록하지 못했습니다."));
+  } finally {
+    button.disabled = false;
+    button.textContent = "등록";
+  }
+}
+
+async function confirmPasswordAction(event) {
+  event.preventDefault();
+  if (!db || !passwordAction) return;
+  const password = $("#passwordCheck").value.trim();
+  const button = $("#passwordForm button");
+  if (!/^\d{4}$/.test(password)) return showToast("비밀번호는 숫자 4자리로 입력해주세요.");
+
+  button.disabled = true;
+  button.textContent = "확인 중...";
+  try {
+    if (passwordAction.type === "delete-post") {
+      const { data, error } = await db.rpc("delete_opinion", {
+        p_id: passwordAction.id,
+        p_password: password
+      });
+      if (error) throw error;
+      if (!data) throw new Error("비밀번호가 맞지 않습니다.");
+      showToast("글을 삭제했습니다.");
+    } else if (passwordAction.type === "delete-comment") {
+      const { data, error } = await db.rpc("delete_comment", {
+        p_id: passwordAction.id,
+        p_password: password
+      });
+      if (error) throw error;
+      if (!data) throw new Error("비밀번호가 맞지 않습니다.");
+      showToast("댓글을 삭제했습니다.");
+    }
+    closePasswordModal();
+    await loadBoard({ silent: true });
+  } catch (error) {
+    console.error(error);
+    showToast(readableError(error, "삭제하지 못했습니다."));
+  } finally {
+    button.disabled = false;
+    button.textContent = "확인";
+  }
+}
+
+async function sharePost(postId) {
+  const post = posts.find(item => item.id === postId);
+  const url = new URL(window.location.href);
+  url.hash = `post-${postId}`;
+  const shareData = {
+    title: post?.title ? `ASRC · ${post.title}` : "ASRC 운영 계획",
+    text: post?.content?.slice(0, 90) || "ASRC 운영 계획 게시판",
+    url: url.toString()
+  };
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+    } else if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(shareData.url);
+      showToast("글 링크를 복사했습니다.");
+    } else {
+      const input = document.createElement("textarea");
+      input.value = shareData.url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      input.remove();
+      showToast("글 링크를 복사했습니다.");
+    }
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast("공유하지 못했습니다.");
+  }
+}
+
+function focusSharedPost() {
+  if (!location.hash.startsWith("#post-")) return;
+  const target = document.querySelector(location.hash);
+  if (!target) return;
+  setTimeout(() => {
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    target.classList.add("shared-target");
+    setTimeout(() => target.classList.remove("shared-target"), 1500);
+  }, 120);
+}
+
+function handlePostListClick(event) {
+  const button = event.target.closest("[data-action]");
+  if (!button) return;
+  const action = button.dataset.action;
+  const postId = button.dataset.postId;
+  const commentId = button.dataset.commentId;
+
+  if (action === "edit-post") {
+    const post = posts.find(item => item.id === postId);
+    if (post) openPostModal(post);
+  } else if (action === "delete-post") {
+    openPasswordModal({ type: "delete-post", id: postId });
+  } else if (action === "like") {
+    toggleLike(postId, button);
+  } else if (action === "like-comment") {
+    toggleCommentLike(commentId, button);
+  } else if (action === "toggle-comments") {
+    if (openedCommentIds.has(postId)) openedCommentIds.delete(postId);
+    else openedCommentIds.add(postId);
+    renderBoard();
+  } else if (action === "toggle-reply") {
+    openedCommentIds.add(postId);
+    if (openedReplyIds.has(commentId)) openedReplyIds.delete(commentId);
+    else openedReplyIds.add(commentId);
+    renderBoard();
+    setTimeout(() => {
+      const form = $(`.reply-form[data-parent-comment-id="${commentId}"]`);
+      if (form) $("input[name='content']", form)?.focus();
+    }, 0);
+  } else if (action === "share") {
+    sharePost(postId);
+  } else if (action === "delete-comment") {
+    openPasswordModal({ type: "delete-comment", id: commentId });
+  }
+}
+
+function startRealtime() {
+  if (!db) return;
+  const reload = () => {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(() => loadBoard({ silent: true }), 250);
+  };
+
+  realtimePosts = db
+    .channel("asrc-board-posts-v7")
+    .on("postgres_changes", { event: "*", schema: "public", table: "opinions" }, reload)
+    .subscribe();
+
+  realtimeComments = db
+    .channel("asrc-board-comments-v7")
+    .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, reload)
+    .subscribe();
+}
+
+$("#openPostBtn").addEventListener("click", () => openPostModal());
+$("#heroWriteBtn")?.addEventListener("click", () => openPostModal());
+$("#postForm").addEventListener("submit", submitPost);
+$("#postContent").addEventListener("input", updatePostCharCount);
+$("#isNotice").addEventListener("change", updateNoticePinVisibility);
+$("#passwordForm").addEventListener("submit", confirmPasswordAction);
+$("#postList").addEventListener("click", handlePostListClick);
+$("#postList").addEventListener("submit", event => {
+  const form = event.target.closest(".comment-form, .reply-form");
+  if (!form) return;
+  event.preventDefault();
+  submitComment(form);
+});
+
+$$('[data-close-post]').forEach(element => element.addEventListener("click", closePostModal));
+$$('[data-close-password]').forEach(element => element.addEventListener("click", closePasswordModal));
+
+$$('.filter').forEach(button => button.addEventListener("click", () => {
+  currentFilter = button.dataset.filter;
+  $$('.filter').forEach(item => item.classList.toggle("active", item === button));
+  renderBoard();
+}));
+
+$("#sortSelect").addEventListener("change", renderBoard);
+window.addEventListener("hashchange", focusSharedPost);
+window.addEventListener("scroll", () => $("#topBtn").classList.toggle("show", window.scrollY > 500));
+$("#topBtn").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+
+document.addEventListener("keydown", event => {
+  if (event.key === "Escape") {
+    closePostModal();
+    closePasswordModal();
+  }
+});
+
+window.addEventListener("beforeunload", () => {
+  if (db && realtimePosts) db.removeChannel(realtimePosts);
+  if (db && realtimeComments) db.removeChannel(realtimeComments);
+});
+
+if (!db && ["localhost", "127.0.0.1"].includes(location.hostname)) {
+  const now = new Date().toISOString();
+  posts = [{
+    id: "preview-notice",
+    meeting_id: BOARD_ID,
+    nickname: "운영진",
+    category: "운영",
+    title: "이번 달 러닝 운영 안내",
+    content: "중요한 운영 내용은 공지로 등록하고, 댓글과 답글로 의견을 이어갈 수 있습니다.",
+    likes: 8,
+    is_notice: true,
+    created_at: now,
+    updated_at: now
+  }];
+  comments = [{
+    id: "preview-comment",
+    opinion_id: "preview-notice",
+    parent_comment_id: null,
+    author_name: "김민수",
+    content: "확인했습니다! 일정 관련해서 한 가지 질문이 있어요.",
+    likes: 2,
+    created_at: now
+  }, {
+    id: "preview-reply",
+    opinion_id: "preview-notice",
+    parent_comment_id: "preview-comment",
+    author_name: "운영진",
+    content: "답글로 남겨주시면 확인해서 안내드릴게요.",
+    likes: 1,
+    created_at: now
+  }];
+  openedCommentIds.add("preview-notice");
+}
+
+renderBoard();
+loadBoard();
+startRealtime();
