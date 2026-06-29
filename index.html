@@ -3,84 +3,65 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="ASRC 운영 아이디어를 함께 나누는 러닝 크루 게시판" />
+  <meta name="description" content="ASRC 운영 아이디어를 함께 나누는 게시판" />
   <title>ASRC · 같이 달려요</title>
-  <link rel="stylesheet" href="style.css" />
+  <link rel="stylesheet" href="style-v5.css?v=5" />
 </head>
 <body>
-  <header class="topbar">
-    <a class="brand" href="#top" aria-label="ASRC 홈">
-      <span class="brand-symbol">A</span>
-      <span class="brand-copy">
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="logo" href="#top" aria-label="ASRC 홈">
         <strong>ASRC</strong>
-        <small>Ansan Running Crew</small>
-      </span>
-    </a>
-    <nav class="top-nav">
-      <a href="#board">운영 계획</a>
-      <a href="https://www.instagram.com/asrc_official?igsh=ZHJ3eHlmMzYxbzJ4" target="_blank" rel="noopener">Instagram</a>
-    </nav>
+        <span>Ansan Running Crew</span>
+      </a>
+      <nav class="header-nav" aria-label="주요 메뉴">
+        <a href="#board">운영 계획</a>
+        <a href="https://www.instagram.com/asrc_official?igsh=ZHJ3eHlmMzYxbzJ4" target="_blank" rel="noopener">Instagram</a>
+      </nav>
+    </div>
   </header>
 
-  <div class="setup-banner" id="setupBanner" hidden>
-    <strong>게시판 연결이 끊겨 있습니다.</strong>
-    <span><code>config.js</code>의 Supabase 주소와 Publishable key를 다시 넣어주세요.</span>
-  </div>
-
   <main id="top">
-    <section class="hero">
+    <section class="hero-shell">
       <div class="hero-copy">
         <span class="eyebrow">ASRC CREW BOARD</span>
         <h1>ASRC,<br><em>같이 달려요.</em></h1>
         <p>운영 아이디어를 남기고, 좋아요와 댓글로 편하게 이야기해요.</p>
         <div class="hero-actions">
-          <button class="btn primary" id="heroWriteBtn" type="button">게시글 작성하기</button>
-          <a class="btn ghost" href="#board">게시판 보기</a>
+          <button class="btn btn-primary" id="heroWriteBtn" type="button">글 남기기</button>
+          <a class="btn btn-secondary" href="#board">게시판 보기</a>
         </div>
       </div>
 
-      <div class="hero-visual" aria-hidden="true">
-        <div class="speed-line line-a"></div>
-        <div class="speed-line line-b"></div>
-        <div class="speed-line line-c"></div>
-        <svg class="runner-svg" viewBox="0 0 560 430" role="img" aria-label="달리는 사람 일러스트">
-          <defs>
-            <linearGradient id="runnerGradient" x1="0" y1="0" x2="1" y2="1">
-              <stop offset="0%" stop-color="#102c63" />
-              <stop offset="100%" stop-color="#315fb9" />
-            </linearGradient>
-          </defs>
-          <path class="track-shadow" d="M50 335 C160 300 280 310 500 260" />
-          <path class="track-accent" d="M60 350 C180 315 320 320 520 272" />
-          <circle cx="325" cy="92" r="35" fill="url(#runnerGradient)" />
-          <path d="M300 130 C278 160 272 205 296 232 C320 260 360 254 378 226 C394 201 390 166 368 143 C348 123 318 118 300 130 Z" fill="url(#runnerGradient)" />
-          <path d="M295 159 L218 209" class="runner-stroke" />
-          <path d="M367 158 L427 118" class="runner-stroke" />
-          <path d="M311 238 L248 318" class="runner-stroke" />
-          <path d="M356 238 L436 294" class="runner-stroke" />
-          <path d="M238 320 L190 326" class="runner-stroke short" />
-          <path d="M436 294 L480 305" class="runner-stroke short" />
-          <path d="M254 145 C218 130 174 139 148 162" class="motion-stroke" />
-          <path d="M257 172 C210 165 157 181 123 210" class="motion-stroke light" />
-        </svg>
-        <div class="run-copy-card">
-          <span>RUN · TALK · SHARE</span>
-          <strong>같이 달리고,<br>같이 만들어가요.</strong>
+      <div class="hero-art" aria-hidden="true">
+        <div class="hero-art-top">
+          <span>ANSAN RUNNING CREW</span>
+          <span>RUN TOGETHER</span>
+        </div>
+        <div class="hero-run-word">RUN</div>
+        <div class="lane lane-1"></div>
+        <div class="lane lane-2"></div>
+        <div class="lane lane-3"></div>
+        <div class="pace-chip">5:30 / KM</div>
+        <div class="distance-chip">10 KM</div>
+        <div class="hero-art-bottom">
+          <strong>ASRC</strong>
+          <span>MOVE · SHARE · TOGETHER</span>
         </div>
       </div>
     </section>
 
     <section class="board-section" id="board">
-      <div class="section-head">
+      <div class="board-heading-row">
         <div>
-          <span class="section-kicker">CREW BOARD</span>
+          <span class="section-label">CREW BOARD</span>
           <h2>운영 계획</h2>
-          <p>우리의 아이디어로 더 즐거운 러닝 문화를 만들어가요.</p>
+          <p>크루를 더 즐겁게 만들 아이디어를 편하게 나눠주세요.</p>
         </div>
-        <button class="btn navy" id="openPostBtn" type="button">+ 글쓰기</button>
+        <button class="btn btn-dark" id="openPostBtn" type="button">+ 글쓰기</button>
       </div>
 
-      <div class="board-toolbar">
+      <div class="board-control-card">
         <div class="filter-buttons" id="filterButtons">
           <button class="filter active" data-filter="all">전체</button>
           <button class="filter" data-filter="운영">운영</button>
@@ -90,60 +71,56 @@
           <button class="filter" data-filter="안전">안전</button>
           <button class="filter" data-filter="기타">기타</button>
         </div>
-        <select id="sortSelect" aria-label="정렬 기준">
-          <option value="latest">최신순</option>
-          <option value="likes">좋아요순</option>
-          <option value="comments">댓글순</option>
-          <option value="oldest">오래된순</option>
-        </select>
+
+        <div class="board-meta-control">
+          <div class="summary-line" aria-label="게시판 현황">
+            <span>글 <strong id="postCount">0</strong></span>
+            <span>댓글 <strong id="commentCount">0</strong></span>
+            <span>좋아요 <strong id="likeCount">0</strong></span>
+          </div>
+          <select id="sortSelect" aria-label="정렬 기준">
+            <option value="latest">최신순</option>
+            <option value="likes">좋아요순</option>
+            <option value="comments">댓글순</option>
+            <option value="oldest">오래된순</option>
+          </select>
+        </div>
       </div>
 
-      <div class="board-summary" aria-label="게시판 현황">
-        <div><span>게시글</span><strong id="postCount">0</strong></div>
-        <div><span>댓글</span><strong id="commentCount">0</strong></div>
-        <div><span>좋아요</span><strong id="likeCount">0</strong></div>
+      <div class="connection-state" id="connectionState" hidden>
+        게시판 연결 정보를 확인해주세요. <code>config.js</code>의 Supabase 주소와 Publishable key가 필요합니다.
       </div>
 
       <div class="post-list" id="postList"></div>
       <div class="empty-state" id="emptyState" hidden>
-        <span>💬</span>
-        <h3>아직 올라온 글이 없어요.</h3>
-        <p>첫 번째 아이디어를 남겨주세요.</p>
+        <strong>아직 올라온 글이 없어요.</strong>
+        <p>첫 번째 운영 아이디어를 남겨주세요.</p>
       </div>
     </section>
   </main>
 
   <footer class="site-footer">
     <div class="footer-inner">
-      <div class="footer-brand">
-        <span class="footer-symbol">A</span>
-        <div>
-          <strong>ASRC</strong>
-          <span>Ansan Running Crew</span>
-        </div>
+      <div class="footer-logo">
+        <strong>ASRC</strong>
+        <span>Ansan Running Crew</span>
       </div>
-      <div class="footer-message">
-        <strong>함께 달리고, 함께 이야기해요.</strong>
-        <p>모두가 즐거운 러닝 문화를 만들어갑니다.</p>
-      </div>
-      <a class="footer-instagram" href="https://www.instagram.com/asrc_official?igsh=ZHJ3eHlmMzYxbzJ4" target="_blank" rel="noopener">
-        <span class="ig-icon">◎</span>
-        <div>
-          <strong>Instagram · @asrc_official</strong>
-          <small>Ansan Running Crew</small>
-        </div>
+      <p>함께 달리고, 함께 이야기해요.</p>
+      <a href="https://www.instagram.com/asrc_official?igsh=ZHJ3eHlmMzYxbzJ4" target="_blank" rel="noopener" class="instagram-link">
+        <span class="instagram-mark">◎</span>
+        <span><strong>@asrc_official</strong><small>Instagram</small></span>
       </a>
     </div>
-    <small class="copyright">© 2026 ASRC (Ansan Running Crew). All rights reserved.</small>
+    <small class="copyright">© 2026 ASRC · Ansan Running Crew</small>
   </footer>
 
-  <button class="top-btn" id="topBtn" aria-label="맨 위로 이동">↑</button>
+  <button class="top-button" id="topBtn" type="button" aria-label="맨 위로 이동">↑</button>
 
   <div class="modal" id="postModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-post></div>
     <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="postModalTitle">
-      <button class="modal-close" data-close-post aria-label="닫기">×</button>
-      <span class="section-kicker">NEW POST</span>
+      <button class="modal-close" data-close-post type="button" aria-label="닫기">×</button>
+      <span class="section-label">NEW POST</span>
       <h2 id="postModalTitle">새 글 작성</h2>
       <form id="postForm">
         <input type="hidden" id="editingPostId" />
@@ -169,10 +146,10 @@
           <textarea id="postContent" maxlength="1000" rows="7" placeholder="생각이나 제안을 자유롭게 적어주세요." required></textarea>
           <small class="char-count"><span id="postCharCount">0</span>/1000</small>
         </label>
-        <label id="postPasswordWrap">4자리 비밀번호
+        <label>4자리 비밀번호
           <input id="postPassword" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="수정·삭제할 때 사용" required />
         </label>
-        <button class="btn primary full" type="submit" id="postSubmitBtn">등록하기</button>
+        <button class="btn btn-primary full" type="submit" id="postSubmitBtn">등록하기</button>
       </form>
     </div>
   </div>
@@ -180,12 +157,12 @@
   <div class="modal" id="passwordModal" aria-hidden="true">
     <div class="modal-backdrop" data-close-password></div>
     <div class="modal-panel small" role="dialog" aria-modal="true" aria-labelledby="passwordTitle">
-      <button class="modal-close" data-close-password aria-label="닫기">×</button>
+      <button class="modal-close" data-close-password type="button" aria-label="닫기">×</button>
       <h2 id="passwordTitle">비밀번호 확인</h2>
       <p class="modal-help" id="passwordHelp">작성할 때 설정한 4자리 비밀번호를 입력해주세요.</p>
       <form id="passwordForm">
         <input id="passwordCheck" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="숫자 4자리" required />
-        <button class="btn primary full" type="submit">확인</button>
+        <button class="btn btn-primary full" type="submit">확인</button>
       </form>
     </div>
   </div>
@@ -193,7 +170,7 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="config.js"></script>
-  <script src="script.js"></script>
+  <script src="config.js?v=5"></script>
+  <script src="app-v5.js?v=5"></script>
 </body>
 </html>
