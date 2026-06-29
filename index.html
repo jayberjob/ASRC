@@ -10,7 +10,7 @@
 <body>
   <header class="topbar">
     <a class="brand" href="#top" aria-label="ASRC 홈">
-      <img class="brand-logo" src="mascot.png" alt="ASRC 마스코트" />
+      <span class="brand-symbol">A</span>
       <span class="brand-copy">
         <strong>ASRC</strong>
         <small>Ansan Running Crew</small>
@@ -23,8 +23,8 @@
   </header>
 
   <div class="setup-banner" id="setupBanner" hidden>
-    <strong>Supabase 연결 설정이 필요합니다.</strong>
-    <span><code>config.js</code>에 Project URL과 Publishable key가 들어 있는지 확인해주세요.</span>
+    <strong>게시판 연결이 끊겨 있습니다.</strong>
+    <span><code>config.js</code>의 Supabase 주소와 Publishable key를 다시 넣어주세요.</span>
   </div>
 
   <main id="top">
@@ -40,16 +40,33 @@
       </div>
 
       <div class="hero-visual" aria-hidden="true">
-        <img class="hero-mascot" src="mascot.png" alt="" />
-        <div class="hero-badge">
-          <span>WE RUN TOGETHER</span>
-          <img src="mascot.png" alt="" />
-          <strong>ASRC</strong>
+        <div class="speed-line line-a"></div>
+        <div class="speed-line line-b"></div>
+        <div class="speed-line line-c"></div>
+        <svg class="runner-svg" viewBox="0 0 560 430" role="img" aria-label="달리는 사람 일러스트">
+          <defs>
+            <linearGradient id="runnerGradient" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#102c63" />
+              <stop offset="100%" stop-color="#315fb9" />
+            </linearGradient>
+          </defs>
+          <path class="track-shadow" d="M50 335 C160 300 280 310 500 260" />
+          <path class="track-accent" d="M60 350 C180 315 320 320 520 272" />
+          <circle cx="325" cy="92" r="35" fill="url(#runnerGradient)" />
+          <path d="M300 130 C278 160 272 205 296 232 C320 260 360 254 378 226 C394 201 390 166 368 143 C348 123 318 118 300 130 Z" fill="url(#runnerGradient)" />
+          <path d="M295 159 L218 209" class="runner-stroke" />
+          <path d="M367 158 L427 118" class="runner-stroke" />
+          <path d="M311 238 L248 318" class="runner-stroke" />
+          <path d="M356 238 L436 294" class="runner-stroke" />
+          <path d="M238 320 L190 326" class="runner-stroke short" />
+          <path d="M436 294 L480 305" class="runner-stroke short" />
+          <path d="M254 145 C218 130 174 139 148 162" class="motion-stroke" />
+          <path d="M257 172 C210 165 157 181 123 210" class="motion-stroke light" />
+        </svg>
+        <div class="run-copy-card">
+          <span>RUN · TALK · SHARE</span>
+          <strong>같이 달리고,<br>같이 만들어가요.</strong>
         </div>
-        <div class="track track-one"></div>
-        <div class="track track-two"></div>
-        <div class="cloud cloud-one"></div>
-        <div class="cloud cloud-two"></div>
       </div>
     </section>
 
@@ -98,24 +115,22 @@
 
   <footer class="site-footer">
     <div class="footer-inner">
-      <div class="footer-brand-wrap">
-        <img class="footer-logo" src="mascot.png" alt="ASRC 마스코트" />
-        <div class="footer-brand-copy">
+      <div class="footer-brand">
+        <span class="footer-symbol">A</span>
+        <div>
           <strong>ASRC</strong>
           <span>Ansan Running Crew</span>
         </div>
       </div>
-
       <div class="footer-message">
         <strong>함께 달리고, 함께 이야기해요.</strong>
         <p>모두가 즐거운 러닝 문화를 만들어갑니다.</p>
       </div>
-
       <a class="footer-instagram" href="https://www.instagram.com/asrc_official?igsh=ZHJ3eHlmMzYxbzJ4" target="_blank" rel="noopener">
         <span class="ig-icon">◎</span>
         <div>
           <strong>Instagram · @asrc_official</strong>
-          <small>ansan running crew</small>
+          <small>Ansan Running Crew</small>
         </div>
       </a>
     </div>

@@ -118,103 +118,39 @@ function renderComment(comment) {
   `;
 }
 
-function visualPresetFor(category) {
-  if (category === "정기런") {
-    return {
-      className: "route",
-      label: "RUN ROUTE",
-      body: `
-        <div class="visual-copy">
-          <strong>같이 달릴 코스를 모아봐요</strong>
-          <span>정기런 아이디어와 추천 코스를 공유해보세요.</span>
-          <div class="route-line"></div>
-        </div>
-      `
-    };
-  }
-
-  if (category === "안전") {
-    return {
-      className: "safety",
-      label: "RUN SAFE",
-      body: `
-        <div class="visual-copy">
-          <strong>안전하게 오래 달리기</strong>
-          <span>스트레칭, 페이스 조절, 안전 팁을 함께 나눠요.</span>
-          <div class="safety-items">
-            <span class="chip-stretch">스트레칭</span>
-            <span class="chip-stretch">회복 루틴</span>
-          </div>
-        </div>
-      `
-    };
-  }
-
-  return {
-    className: "event",
-    label: category === "행사" ? "CREW EVENT" : "ASRC IDEA",
-    body: `
-      <div class="visual-copy">
-        <strong>함께 만드는 크루 운영</strong>
-        <span>운영 아이디어와 준비물, 친목 아이디어를 남겨주세요.</span>
-        <div class="event-items">
-          <span class="chip-gear">운영 아이디어</span>
-          <span class="chip-gear">같이 공유</span>
-        </div>
-      </div>
-    `
-  };
-}
-
 function renderPost(post) {
   const postComments = commentsFor(post.id);
   const commentsOpen = openedCommentIds.has(post.id);
   const liked = likedPostIds.has(post.id);
-  const initial = (post.nickname || "A").trim().charAt(0).toUpperCase();
-  const visual = visualPresetFor(post.category);
 
   return `
     <article class="post-card" id="post-${post.id}" data-post-id="${post.id}">
-      <div class="post-main">
-        <div>
-          <div class="post-head">
-            <div class="post-author-block">
-              <div class="author-avatar">${escapeHtml(initial || "A")}</div>
-              <div>
-                <div class="post-meta">
-                  <span class="category-chip">${escapeHtml(post.category)}</span>
-                  <span class="post-author">${escapeHtml(post.nickname)}</span>
-                  <span>${formatDate(post.created_at)}</span>
-                  ${post.updated_at && post.updated_at !== post.created_at ? "<span>수정됨</span>" : ""}
-                </div>
-                <h3 class="post-title">${escapeHtml(post.title)}</h3>
-              </div>
+      <div class="post-body">
+        <div class="post-top">
+          <div>
+            <div class="post-meta">
+              <span class="category-chip">${escapeHtml(post.category)}</span>
+              <span class="post-author">${escapeHtml(post.nickname)}</span>
+              <span>${formatDate(post.created_at)}</span>
+              ${post.updated_at && post.updated_at !== post.created_at ? "<span>수정됨</span>" : ""}
             </div>
-            <div class="post-menu">
-              <button class="icon-btn" type="button" data-action="edit-post" data-post-id="${post.id}" aria-label="글 수정">수정</button>
-              <button class="icon-btn" type="button" data-action="delete-post" data-post-id="${post.id}" aria-label="글 삭제">삭제</button>
-            </div>
+            <h3 class="post-title">${escapeHtml(post.title)}</h3>
           </div>
-          <p class="post-content">${escapeHtml(post.content)}</p>
-        </div>
-
-        <div class="post-visual">
-          <div class="visual-inner ${visual.className}">
-            <span class="visual-label">${visual.label}</span>
-            ${visual.body}
+          <div class="post-menu">
+            <button class="icon-btn" type="button" data-action="edit-post" data-post-id="${post.id}" aria-label="글 수정">수정</button>
+            <button class="icon-btn" type="button" data-action="delete-post" data-post-id="${post.id}" aria-label="글 삭제">삭제</button>
           </div>
         </div>
+        <p class="post-content">${escapeHtml(post.content)}</p>
       </div>
 
       <div class="post-actions">
-        <div class="post-actions-left">
-          <button class="action-btn ${liked ? "liked" : ""}" type="button" data-action="like" data-post-id="${post.id}">
-            <span>${liked ? "♥" : "♡"}</span> 좋아요 <strong>${Number(post.likes || 0)}</strong>
-          </button>
-          <button class="action-btn" type="button" data-action="toggle-comments" data-post-id="${post.id}" aria-expanded="${commentsOpen}">
-            <span>💬</span> 댓글 <strong>${postComments.length}</strong>
-          </button>
-        </div>
+        <button class="action-btn ${liked ? "liked" : ""}" type="button" data-action="like" data-post-id="${post.id}">
+          <span>${liked ? "♥" : "♡"}</span> 좋아요 <strong>${Number(post.likes || 0)}</strong>
+        </button>
+        <button class="action-btn" type="button" data-action="toggle-comments" data-post-id="${post.id}" aria-expanded="${commentsOpen}">
+          <span>💬</span> 댓글 <strong>${postComments.length}</strong>
+        </button>
         <button class="action-btn share" type="button" data-action="share" data-post-id="${post.id}">
           <span>↗</span> 공유
         </button>
