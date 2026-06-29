@@ -3,43 +3,53 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="ASRC 운영 계획과 아이디어를 함께 나누는 게시판" />
-  <title>ASRC · 같이 만들어요</title>
+  <meta name="description" content="ASRC 운영 아이디어를 함께 나누는 러닝 크루 게시판" />
+  <title>ASRC · 같이 달려요</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="#top" aria-label="ASRC 홈">
-      <span class="brand-mark">A</span>
+      <img class="brand-logo" src="mascot.png" alt="ASRC 마스코트" />
       <span class="brand-copy">
         <strong>ASRC</strong>
-        <small>ANSAN SOCIAL RUNNING CREW</small>
+        <small>Ansan Running Crew</small>
       </span>
     </a>
-    <a class="header-link" href="#board">운영 계획</a>
+    <nav class="top-nav">
+      <a href="#board">운영 계획</a>
+      <a href="https://www.instagram.com/asrc_official?igsh=ZHJ3eHlmMzYxbzJ4" target="_blank" rel="noopener">Instagram</a>
+    </nav>
   </header>
 
   <div class="setup-banner" id="setupBanner" hidden>
     <strong>Supabase 연결 설정이 필요합니다.</strong>
-    <span>기존 <code>config.js</code>에 Project URL과 Publishable key가 들어 있는지 확인해주세요.</span>
+    <span><code>config.js</code>에 Project URL과 Publishable key가 들어 있는지 확인해주세요.</span>
   </div>
 
   <main id="top">
     <section class="hero">
       <div class="hero-copy">
         <span class="eyebrow">ASRC CREW BOARD</span>
-        <h1>ASRC,<br><em>같이 만들어요.</em></h1>
-        <p>운영 계획과 아이디어를 남기고, 좋아요와 댓글로 편하게 이야기해요.</p>
-        <a class="btn primary" href="#board">게시판 보기</a>
-      </div>
-      <div class="hero-visual" aria-hidden="true">
-        <div class="orbit orbit-one"></div>
-        <div class="orbit orbit-two"></div>
-        <div class="runner-card">
-          <span>RUN · TALK · SHARE</span>
-          <strong>ASRC</strong>
-          <small>우리의 크루는 우리가 함께 만듭니다.</small>
+        <h1>ASRC,<br><em>같이 달려요.</em></h1>
+        <p>운영 아이디어를 남기고, 좋아요와 댓글로 편하게 이야기해요.</p>
+        <div class="hero-actions">
+          <button class="btn primary" id="heroWriteBtn" type="button">게시글 작성하기</button>
+          <a class="btn ghost" href="#board">게시판 보기</a>
         </div>
+      </div>
+
+      <div class="hero-visual" aria-hidden="true">
+        <img class="hero-mascot" src="mascot.png" alt="" />
+        <div class="hero-badge">
+          <span>WE RUN TOGETHER</span>
+          <img src="mascot.png" alt="" />
+          <strong>ASRC</strong>
+        </div>
+        <div class="track track-one"></div>
+        <div class="track track-two"></div>
+        <div class="cloud cloud-one"></div>
+        <div class="cloud cloud-two"></div>
       </div>
     </section>
 
@@ -48,9 +58,9 @@
         <div>
           <span class="section-kicker">CREW BOARD</span>
           <h2>운영 계획</h2>
-          <p>생각을 남기고 서로의 의견을 이어가세요.</p>
+          <p>우리의 아이디어로 더 즐거운 러닝 문화를 만들어가요.</p>
         </div>
-        <button class="btn primary" id="openPostBtn">+ 글쓰기</button>
+        <button class="btn navy" id="openPostBtn" type="button">+ 글쓰기</button>
       </div>
 
       <div class="board-toolbar">
@@ -72,7 +82,7 @@
       </div>
 
       <div class="board-summary" aria-label="게시판 현황">
-        <div><span>글</span><strong id="postCount">0</strong></div>
+        <div><span>게시글</span><strong id="postCount">0</strong></div>
         <div><span>댓글</span><strong id="commentCount">0</strong></div>
         <div><span>좋아요</span><strong id="likeCount">0</strong></div>
       </div>
@@ -81,18 +91,35 @@
       <div class="empty-state" id="emptyState" hidden>
         <span>💬</span>
         <h3>아직 올라온 글이 없어요.</h3>
-        <p>첫 번째 운영 아이디어를 남겨주세요.</p>
+        <p>첫 번째 아이디어를 남겨주세요.</p>
       </div>
     </section>
   </main>
 
-  <footer>
-    <div class="brand footer-brand">
-      <span class="brand-mark">A</span>
-      <span class="brand-copy"><strong>ASRC</strong><small>ANSAN SOCIAL RUNNING CREW</small></span>
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div class="footer-brand-wrap">
+        <img class="footer-logo" src="mascot.png" alt="ASRC 마스코트" />
+        <div class="footer-brand-copy">
+          <strong>ASRC</strong>
+          <span>Ansan Running Crew</span>
+        </div>
+      </div>
+
+      <div class="footer-message">
+        <strong>함께 달리고, 함께 이야기해요.</strong>
+        <p>모두가 즐거운 러닝 문화를 만들어갑니다.</p>
+      </div>
+
+      <a class="footer-instagram" href="https://www.instagram.com/asrc_official?igsh=ZHJ3eHlmMzYxbzJ4" target="_blank" rel="noopener">
+        <span class="ig-icon">◎</span>
+        <div>
+          <strong>Instagram · @asrc_official</strong>
+          <small>ansan running crew</small>
+        </div>
+      </a>
     </div>
-    <p>함께 달리고, 함께 이야기해요.</p>
-    <small>© 2026 ASRC</small>
+    <small class="copyright">© 2026 ASRC (Ansan Running Crew). All rights reserved.</small>
   </footer>
 
   <button class="top-btn" id="topBtn" aria-label="맨 위로 이동">↑</button>
