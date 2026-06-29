@@ -3,170 +3,85 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="ASRC 안산러닝크루 정기회의 의견 공유 페이지" />
-  <title>ASRC 정기회의</title>
+  <meta name="description" content="ASRC 운영 계획과 아이디어를 함께 나누는 게시판" />
+  <title>ASRC · 같이 만들어요</title>
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
   <header class="topbar">
     <a class="brand" href="#top" aria-label="ASRC 홈">
       <span class="brand-mark">A</span>
-      <span>
+      <span class="brand-copy">
         <strong>ASRC</strong>
         <small>ANSAN SOCIAL RUNNING CREW</small>
       </span>
     </a>
-    <nav class="desktop-nav" aria-label="주요 메뉴">
-      <a href="#meeting">회의 안내</a>
-      <a href="#agenda">주요 안건</a>
-      <a href="#opinions">의견 나누기</a>
-      <a href="#summary">의견 요약</a>
-    </nav>
-    <button class="menu-btn" id="menuBtn" aria-label="메뉴 열기" aria-expanded="false">☰</button>
+    <a class="header-link" href="#board">운영 계획</a>
   </header>
 
   <div class="setup-banner" id="setupBanner" hidden>
     <strong>Supabase 연결 설정이 필요합니다.</strong>
-    <span><code>config.js</code>에 프로젝트 URL과 Publishable key를 입력한 뒤 다시 올려주세요.</span>
-  </div>
-
-  <div class="mobile-nav" id="mobileNav">
-    <a href="#meeting">회의 안내</a>
-    <a href="#agenda">주요 안건</a>
-    <a href="#opinions">의견 나누기</a>
-    <a href="#summary">의견 요약</a>
+    <span>기존 <code>config.js</code>에 Project URL과 Publishable key가 들어 있는지 확인해주세요.</span>
   </div>
 
   <main id="top">
     <section class="hero">
       <div class="hero-copy">
-        <span class="eyebrow">RUN TOGETHER · DECIDE TOGETHER</span>
-        <h1>더 좋은 ASRC를 위한<br><em>우리의 정기회의</em></h1>
-        <p>상반기와 하반기, 1년에 두 번 크루의 방향을 함께 정합니다. 작은 아이디어도 편하게 남겨주세요.</p>
-        <div class="hero-actions">
-          <a class="btn primary" href="#opinions">의견 남기기</a>
-          <a class="btn ghost" href="#agenda">안건 보기</a>
-        </div>
+        <span class="eyebrow">ASRC CREW BOARD</span>
+        <h1>ASRC,<br><em>같이 만들어요.</em></h1>
+        <p>운영 계획과 아이디어를 남기고, 좋아요와 댓글로 편하게 이야기해요.</p>
+        <a class="btn primary" href="#board">게시판 보기</a>
       </div>
       <div class="hero-visual" aria-hidden="true">
-        <div class="pace-card">
-          <span>NEXT MEETING</span>
-          <strong>2026<br>하반기</strong>
-          <small>ASRC REGULAR MEETING</small>
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <div class="runner-card">
+          <span>RUN · TALK · SHARE</span>
+          <strong>ASRC</strong>
+          <small>우리의 크루는 우리가 함께 만듭니다.</small>
         </div>
-        <div class="track-line line-1"></div>
-        <div class="track-line line-2"></div>
-        <div class="runner-dot dot-1"></div>
-        <div class="runner-dot dot-2"></div>
       </div>
     </section>
 
-    <section class="section meeting-section" id="meeting">
+    <section class="board-section" id="board">
       <div class="section-head">
         <div>
-          <span class="section-kicker">MEETING INFO</span>
-          <h2>정기회의 안내</h2>
+          <span class="section-kicker">CREW BOARD</span>
+          <h2>운영 계획</h2>
+          <p>생각을 남기고 서로의 의견을 이어가세요.</p>
         </div>
-        <div class="meeting-tabs" role="tablist" aria-label="회의 선택">
-          <button class="meeting-tab active" data-meeting="2026-first">2026 상반기</button>
-          <button class="meeting-tab" data-meeting="2026-second">2026 하반기</button>
-        </div>
+        <button class="btn primary" id="openPostBtn">+ 글쓰기</button>
       </div>
 
-      <div class="meeting-grid">
-        <article class="meeting-main-card">
-          <div>
-            <span class="status-dot"></span>
-            <span id="meetingStatus">의견 수렴 완료</span>
-          </div>
-          <h3 id="meetingTitle">2026년 상반기 ASRC 정기회의</h3>
-          <p id="meetingDescription">상반기 활동을 돌아보고, 하반기 운영 방향과 신규 러닝 프로그램을 논의합니다.</p>
-          <div class="meeting-meta">
-            <div><span>일시</span><strong id="meetingDate">2026. 06. 20. 토요일 19:00</strong></div>
-            <div><span>장소</span><strong id="meetingPlace">안산 중앙동 커뮤니티룸</strong></div>
-            <div><span>참석</span><strong id="meetingAttendance">ASRC 크루원 누구나</strong></div>
-          </div>
-        </article>
-        <aside class="meeting-side-card">
-          <span class="label">의견 수렴 현황</span>
-          <strong class="big-number" id="opinionCountHero">0</strong>
-          <p>개의 의견이 등록되었습니다.</p>
-          <div class="progress-wrap"><div class="progress-bar" id="progressBar"></div></div>
-          <small>목표 20개 의견</small>
-        </aside>
-      </div>
-    </section>
-
-    <section class="section dark-section" id="agenda">
-      <div class="section-head light">
-        <div>
-          <span class="section-kicker">AGENDA</span>
-          <h2>이번 회의 주요 안건</h2>
-        </div>
-        <p>안건별로 의견을 남기면 회의 전 미리 검토할 수 있습니다.</p>
-      </div>
-
-      <div class="agenda-grid" id="agendaGrid"></div>
-    </section>
-
-    <section class="section" id="opinions">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">CREW VOICE</span>
-          <h2>크루 의견 나누기</h2>
-        </div>
-        <button class="btn primary" id="openFormBtn">+ 새 의견 작성</button>
-      </div>
-
-      <div class="filter-row">
+      <div class="board-toolbar">
         <div class="filter-buttons" id="filterButtons">
           <button class="filter active" data-filter="all">전체</button>
           <button class="filter" data-filter="운영">운영</button>
-          <button class="filter" data-filter="러닝">러닝</button>
+          <button class="filter" data-filter="정기런">정기런</button>
+          <button class="filter" data-filter="행사">행사</button>
           <button class="filter" data-filter="친목">친목</button>
           <button class="filter" data-filter="안전">안전</button>
           <button class="filter" data-filter="기타">기타</button>
         </div>
         <select id="sortSelect" aria-label="정렬 기준">
           <option value="latest">최신순</option>
-          <option value="likes">공감순</option>
+          <option value="likes">좋아요순</option>
+          <option value="comments">댓글순</option>
           <option value="oldest">오래된순</option>
         </select>
       </div>
 
-      <div class="opinion-list" id="opinionList"></div>
-      <div class="empty-state" id="emptyState">
-        <span>💬</span>
-        <h3>아직 등록된 의견이 없습니다.</h3>
-        <p>ASRC를 더 즐겁게 만들 첫 번째 아이디어를 남겨주세요.</p>
+      <div class="board-summary" aria-label="게시판 현황">
+        <div><span>글</span><strong id="postCount">0</strong></div>
+        <div><span>댓글</span><strong id="commentCount">0</strong></div>
+        <div><span>좋아요</span><strong id="likeCount">0</strong></div>
       </div>
-    </section>
 
-    <section class="section summary-section" id="summary">
-      <div class="section-head">
-        <div>
-          <span class="section-kicker">SUMMARY</span>
-          <h2>의견 한눈에 보기</h2>
-        </div>
-        <button class="btn ghost dark" id="exportBtn">의견 데이터 내보내기</button>
-      </div>
-      <div class="summary-grid">
-        <article>
-          <span>전체 의견</span>
-          <strong id="totalOpinions">0</strong>
-        </article>
-        <article>
-          <span>전체 공감</span>
-          <strong id="totalLikes">0</strong>
-        </article>
-        <article>
-          <span>가장 많은 분야</span>
-          <strong id="topCategory">-</strong>
-        </article>
-        <article>
-          <span>가장 공감받은 의견</span>
-          <strong class="compact" id="topOpinion">-</strong>
-        </article>
+      <div class="post-list" id="postList"></div>
+      <div class="empty-state" id="emptyState" hidden>
+        <span>💬</span>
+        <h3>아직 올라온 글이 없어요.</h3>
+        <p>첫 번째 운영 아이디어를 남겨주세요.</p>
       </div>
     </section>
   </main>
@@ -174,31 +89,31 @@
   <footer>
     <div class="brand footer-brand">
       <span class="brand-mark">A</span>
-      <span><strong>ASRC</strong><small>ANSAN SOCIAL RUNNING CREW</small></span>
+      <span class="brand-copy"><strong>ASRC</strong><small>ANSAN SOCIAL RUNNING CREW</small></span>
     </div>
-    <p>함께 달리고, 함께 이야기하고, 함께 결정합니다.</p>
-    <small>© 2026 ASRC. All rights reserved.</small>
+    <p>함께 달리고, 함께 이야기해요.</p>
+    <small>© 2026 ASRC</small>
   </footer>
 
   <button class="top-btn" id="topBtn" aria-label="맨 위로 이동">↑</button>
 
-  <div class="modal" id="opinionModal" aria-hidden="true">
-    <div class="modal-backdrop" data-close-modal></div>
-    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
-      <button class="modal-close" data-close-modal aria-label="닫기">×</button>
-      <span class="section-kicker">SHARE YOUR IDEA</span>
-      <h2 id="modalTitle">새 의견 작성</h2>
-      <p class="modal-help">익명 또는 닉네임으로 편하게 작성하세요. 비밀번호는 수정·삭제할 때 사용합니다.</p>
-      <form id="opinionForm">
-        <input type="hidden" id="editingId" />
+  <div class="modal" id="postModal" aria-hidden="true">
+    <div class="modal-backdrop" data-close-post></div>
+    <div class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="postModalTitle">
+      <button class="modal-close" data-close-post aria-label="닫기">×</button>
+      <span class="section-kicker">NEW POST</span>
+      <h2 id="postModalTitle">새 글 작성</h2>
+      <form id="postForm">
+        <input type="hidden" id="editingPostId" />
         <div class="form-grid two">
-          <label>닉네임
-            <input id="nickname" maxlength="12" placeholder="예: 안산러너" required />
+          <label>이름
+            <input id="authorName" maxlength="12" placeholder="이름을 입력하세요" required />
           </label>
-          <label>분야
+          <label>분류
             <select id="category" required>
               <option value="운영">운영</option>
-              <option value="러닝">러닝</option>
+              <option value="정기런">정기런</option>
+              <option value="행사">행사</option>
               <option value="친목">친목</option>
               <option value="안전">안전</option>
               <option value="기타">기타</option>
@@ -206,16 +121,16 @@
           </label>
         </div>
         <label>제목
-          <input id="opinionTitle" maxlength="40" placeholder="의견 제목을 입력해주세요" required />
+          <input id="postTitle" maxlength="50" placeholder="어떤 이야기를 나누고 싶나요?" required />
         </label>
         <label>내용
-          <textarea id="opinionContent" maxlength="500" rows="6" placeholder="왜 필요한지, 어떤 방식이면 좋을지 자유롭게 적어주세요." required></textarea>
-          <small class="char-count"><span id="charCount">0</span>/500</small>
+          <textarea id="postContent" maxlength="1000" rows="7" placeholder="생각이나 제안을 자유롭게 적어주세요." required></textarea>
+          <small class="char-count"><span id="postCharCount">0</span>/1000</small>
         </label>
-        <label id="passwordFieldWrap">4자리 비밀번호
-          <input id="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="숫자 4자리" required />
+        <label id="postPasswordWrap">4자리 비밀번호
+          <input id="postPassword" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="수정·삭제할 때 사용" required />
         </label>
-        <button class="btn primary full" type="submit">의견 등록하기</button>
+        <button class="btn primary full" type="submit" id="postSubmitBtn">등록하기</button>
       </form>
     </div>
   </div>
@@ -225,7 +140,7 @@
     <div class="modal-panel small" role="dialog" aria-modal="true" aria-labelledby="passwordTitle">
       <button class="modal-close" data-close-password aria-label="닫기">×</button>
       <h2 id="passwordTitle">비밀번호 확인</h2>
-      <p class="modal-help" id="passwordHelp">작성할 때 입력한 4자리 비밀번호를 입력해주세요.</p>
+      <p class="modal-help" id="passwordHelp">작성할 때 설정한 4자리 비밀번호를 입력해주세요.</p>
       <form id="passwordForm">
         <input id="passwordCheck" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="숫자 4자리" required />
         <button class="btn primary full" type="submit">확인</button>

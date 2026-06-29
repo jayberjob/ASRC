@@ -1,173 +1,64 @@
-const meetings = {
-  "2026-first": {
-    title: "2026년 상반기 ASRC 정기회의",
-    description: "상반기 활동을 돌아보고, 하반기 운영 방향과 신규 러닝 프로그램을 논의합니다.",
-    date: "2026. 06. 20. 토요일 19:00",
-    place: "안산 중앙동 커뮤니티룸",
-    attendance: "ASRC 크루원 누구나",
-    status: "의견 수렴 완료",
-    agendas: [
-      ["01", "상반기 활동 리뷰", "정기런, 번개런, 대회 참가 등 상반기 활동을 함께 돌아봅니다.", "운영"],
-      ["02", "하반기 정기런 운영", "요일, 시간, 코스, 페이스그룹 운영 방식을 논의합니다.", "러닝"],
-      ["03", "신규 크루원 적응", "처음 참여하는 크루원이 더 편하게 어울릴 방법을 찾습니다.", "친목"],
-      ["04", "안전한 러닝 문화", "야간 러닝, 도로 횡단, 비상상황 대응 기준을 정리합니다.", "안전"]
-    ]
-  },
-  "2026-second": {
-    title: "2026년 하반기 ASRC 정기회의",
-    description: "한 해를 마무리하며 내년도 운영계획, 신규 프로그램, 크루 문화를 함께 설계합니다.",
-    date: "2026. 12. 12. 토요일 18:30",
-    place: "안산 고잔동 문화공간",
-    attendance: "ASRC 크루원 누구나",
-    status: "의견 수렴 중",
-    agendas: [
-      ["01", "2026 활동 결산", "올해 좋았던 점과 아쉬웠던 점을 함께 정리합니다.", "운영"],
-      ["02", "2027 운영 계획", "정기런 일정, 운영진 역할, 연간 이벤트를 논의합니다.", "운영"],
-      ["03", "대회 및 원정런", "함께 참가할 대회와 다른 지역 원정런 계획을 세웁니다.", "러닝"],
-      ["04", "크루 문화와 친목", "ASRC다운 분위기와 즐거운 교류 방식을 이야기합니다.", "친목"]
-    ]
-  }
-};
-
-let currentMeeting = localStorage.getItem("asrc-current-meeting") || "2026-second";
-let opinions = [];
-let likedIds = [];
-let currentFilter = "all";
-let pendingAction = null;
-let editingPassword = "";
-let toastTimer;
-let realtimeChannel;
-let reloadTimer;
-
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => [...document.querySelectorAll(selector)];
+const BOARD_ID = "operations";
+const $ = (selector, root = document) => root.querySelector(selector);
+const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 
 const config = window.ASRC_CONFIG || {};
-const configured = /^https:\/\/[a-z0-9-]+\.supabase\.co$/i.test(config.SUPABASE_URL || "")
-  && config.SUPABASE_PUBLISHABLE_KEY
-  && !config.SUPABASE_PUBLISHABLE_KEY.includes("YOUR_");
-const db = configured
+const configured = Boolean(
+  config.SUPABASE_URL &&
+  config.SUPABASE_PUBLISHABLE_KEY &&
+  !config.SUPABASE_URL.includes("YOUR_PROJECT_ID") &&
+  !config.SUPABASE_PUBLISHABLE_KEY.includes("YOUR_KEY")
+);
+
+const db = configured && window.supabase
   ? window.supabase.createClient(config.SUPABASE_URL, config.SUPABASE_PUBLISHABLE_KEY)
   : null;
 
+let posts = [];
+let comments = [];
+let likedPostIds = new Set();
+let openedCommentIds = new Set();
+let currentFilter = "all";
+let passwordAction = null;
+let reloadTimer = null;
+let realtimePosts = null;
+let realtimeComments = null;
+let toastTimer = null;
+
+function createUuid() {
+  if (window.crypto?.randomUUID) return window.crypto.randomUUID();
+  const bytes = new Uint8Array(16);
+  window.crypto.getRandomValues(bytes);
+  bytes[6] = (bytes[6] & 0x0f) | 0x40;
+  bytes[8] = (bytes[8] & 0x3f) | 0x80;
+  const hex = [...bytes].map(byte => byte.toString(16).padStart(2, "0"));
+  return `${hex.slice(0, 4).join("")}-${hex.slice(4, 6).join("")}-${hex.slice(6, 8).join("")}-${hex.slice(8, 10).join("")}-${hex.slice(10).join("")}`;
+}
+
 function getVoterId() {
-  let id = localStorage.getItem("asrc-voter-id");
+  const key = "asrc_board_voter_id";
+  let id = localStorage.getItem(key);
   if (!id) {
-    id = crypto.randomUUID
-      ? crypto.randomUUID()
-      : "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, c => {
-          const r = Math.random() * 16 | 0;
-          return (c === "x" ? r : (r & 0x3 | 0x8)).toString(16);
-        });
-    localStorage.setItem("asrc-voter-id", id);
+    id = createUuid();
+    localStorage.setItem(key, id);
   }
   return id;
 }
 
-const voterId = getVoterId();
-
-function showToast(message) {
-  const toast = $("#toast");
-  toast.textContent = message;
-  toast.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove("show"), 2600);
+function escapeHtml(value = "") {
+  return String(value)
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;")
+    .replaceAll("'", "&#039;");
 }
 
-function requireConnection() {
-  if (db) return true;
-  showToast("먼저 config.js에 Supabase 연결 정보를 입력해주세요.");
-  $("#setupBanner").hidden = false;
-  return false;
-}
-
-function setMeeting(meetingId) {
-  currentMeeting = meetingId;
-  localStorage.setItem("asrc-current-meeting", meetingId);
-  const info = meetings[meetingId];
-  $("#meetingTitle").textContent = info.title;
-  $("#meetingDescription").textContent = info.description;
-  $("#meetingDate").textContent = info.date;
-  $("#meetingPlace").textContent = info.place;
-  $("#meetingAttendance").textContent = info.attendance;
-  $("#meetingStatus").textContent = info.status;
-  $$(".meeting-tab").forEach(btn => btn.classList.toggle("active", btn.dataset.meeting === meetingId));
-  renderAgenda();
-  loadOpinions();
-}
-
-function renderAgenda() {
-  const grid = $("#agendaGrid");
-  grid.innerHTML = meetings[currentMeeting].agendas.map(item => `
-    <article class="agenda-card">
-      <span class="agenda-number">AGENDA ${item[0]}</span>
-      <h3>${item[1]}</h3>
-      <p>${item[2]}</p>
-      <button type="button" data-agenda-category="${item[3]}">이 안건에 의견 남기기 →</button>
-    </article>
-  `).join("");
-
-  $$('[data-agenda-category]').forEach(btn => {
-    btn.addEventListener("click", () => {
-      if (requireConnection()) openOpinionForm(btn.dataset.agendaCategory);
-    });
-  });
-}
-
-function meetingOpinions() {
-  return opinions.filter(item => item.meetingId === currentMeeting);
-}
-
-function mapOpinion(row) {
-  return {
-    id: row.id,
-    meetingId: row.meeting_id,
-    nickname: row.nickname,
-    category: row.category,
-    title: row.title,
-    content: row.content,
-    likes: Number(row.likes) || 0,
-    createdAt: row.created_at,
-    updatedAt: row.updated_at
-  };
-}
-
-async function loadOpinions({ silent = false } = {}) {
-  if (!db) {
-    opinions = [];
-    likedIds = [];
-    renderOpinions();
-    return;
-  }
-
-  if (!silent) $("#opinionList").classList.add("loading");
-
-  const [opinionsResult, likesResult] = await Promise.all([
-    db.from("opinions")
-      .select("id, meeting_id, nickname, category, title, content, likes, created_at, updated_at")
-      .eq("meeting_id", currentMeeting),
-    db.rpc("get_my_liked_opinions", {
-      p_voter_id: voterId,
-      p_meeting_id: currentMeeting
-    })
-  ]);
-
-  $("#opinionList").classList.remove("loading");
-
-  if (opinionsResult.error) {
-    console.error(opinionsResult.error);
-    showToast("의견을 불러오지 못했습니다. Supabase 설정을 확인해주세요.");
-    return;
-  }
-
-  opinions = (opinionsResult.data || []).map(mapOpinion);
-  likedIds = likesResult.error ? [] : (likesResult.data || []).map(item => item.opinion_id);
-  renderOpinions();
-}
-
-function formatDate(dateString) {
-  const date = new Date(dateString);
+function formatDate(value) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "";
   return new Intl.DateTimeFormat("ko-KR", {
+    year: "2-digit",
     month: "2-digit",
     day: "2-digit",
     hour: "2-digit",
@@ -175,140 +66,187 @@ function formatDate(dateString) {
   }).format(date);
 }
 
-function escapeHtml(value) {
-  return String(value ?? "").replace(/[&<>'"]/g, char => ({
-    "&": "&amp;",
-    "<": "&lt;",
-    ">": "&gt;",
-    "'": "&#39;",
-    '"': "&quot;"
-  }[char]));
+function showToast(message) {
+  const toast = $("#toast");
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.classList.add("show");
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 2400);
 }
 
-function renderOpinions() {
-  let items = meetingOpinions();
-  if (currentFilter !== "all") items = items.filter(item => item.category === currentFilter);
+function readableError(error, fallback) {
+  const message = error?.message || "";
+  if (message.includes("schema cache") && message.includes("comments")) {
+    return "Supabase에서 supabase_update_v2.sql을 먼저 실행해주세요.";
+  }
+  if (message.includes("Could not find the function")) {
+    return "Supabase 업데이트 SQL을 먼저 실행해주세요.";
+  }
+  return message || fallback;
+}
 
+function commentsFor(postId) {
+  return comments.filter(comment => comment.opinion_id === postId);
+}
+
+function sortedPosts() {
   const sort = $("#sortSelect").value;
-  items.sort((a, b) => {
-    if (sort === "likes") return b.likes - a.likes || new Date(b.createdAt) - new Date(a.createdAt);
-    if (sort === "oldest") return new Date(a.createdAt) - new Date(b.createdAt);
-    return new Date(b.createdAt) - new Date(a.createdAt);
-  });
+  const filtered = currentFilter === "all"
+    ? [...posts]
+    : posts.filter(post => post.category === currentFilter);
 
-  const list = $("#opinionList");
-  const empty = $("#emptyState");
-  empty.style.display = items.length ? "none" : "block";
-  list.innerHTML = items.map(item => {
-    const liked = likedIds.includes(item.id);
-    return `
-      <article class="opinion-card">
-        <div class="opinion-top">
-          <span class="category-badge">${escapeHtml(item.category)}</span>
-          <time>${formatDate(item.createdAt)}</time>
+  return filtered.sort((a, b) => {
+    if (sort === "likes") return Number(b.likes || 0) - Number(a.likes || 0) || new Date(b.created_at) - new Date(a.created_at);
+    if (sort === "comments") return commentsFor(b.id).length - commentsFor(a.id).length || new Date(b.created_at) - new Date(a.created_at);
+    if (sort === "oldest") return new Date(a.created_at) - new Date(b.created_at);
+    return new Date(b.created_at) - new Date(a.created_at);
+  });
+}
+
+function renderComment(comment) {
+  return `
+    <article class="comment-item">
+      <div>
+        <div class="comment-head">
+          <strong>${escapeHtml(comment.author_name)}</strong>
+          <span>${formatDate(comment.created_at)}</span>
         </div>
-        <h3>${escapeHtml(item.title)}</h3>
-        <div class="content">${escapeHtml(item.content)}</div>
-        <div class="opinion-bottom">
-          <span class="author">by. ${escapeHtml(item.nickname)}</span>
-          <div class="card-actions">
-            <button class="action-btn" data-edit="${item.id}">수정</button>
-            <button class="action-btn" data-delete="${item.id}">삭제</button>
-            <button class="like-btn ${liked ? "liked" : ""}" data-like="${item.id}" aria-label="공감">
-              <span>${liked ? "♥" : "♡"}</span> ${item.likes}
-            </button>
+        <p class="comment-text">${escapeHtml(comment.content)}</p>
+      </div>
+      <button class="comment-delete" type="button" data-action="delete-comment" data-comment-id="${comment.id}" aria-label="댓글 삭제">삭제</button>
+    </article>
+  `;
+}
+
+function renderPost(post) {
+  const postComments = commentsFor(post.id);
+  const commentsOpen = openedCommentIds.has(post.id);
+  const liked = likedPostIds.has(post.id);
+
+  return `
+    <article class="post-card" id="post-${post.id}" data-post-id="${post.id}">
+      <div class="post-body">
+        <div class="post-top">
+          <div>
+            <div class="post-meta">
+              <span class="category-chip">${escapeHtml(post.category)}</span>
+              <span class="post-author">${escapeHtml(post.nickname)}</span>
+              <span>${formatDate(post.created_at)}</span>
+              ${post.updated_at && post.updated_at !== post.created_at ? "<span>수정됨</span>" : ""}
+            </div>
+            <h3 class="post-title">${escapeHtml(post.title)}</h3>
+          </div>
+          <div class="post-menu">
+            <button class="icon-btn" type="button" data-action="edit-post" data-post-id="${post.id}" aria-label="글 수정">수정</button>
+            <button class="icon-btn" type="button" data-action="delete-post" data-post-id="${post.id}" aria-label="글 삭제">삭제</button>
           </div>
         </div>
-      </article>
-    `;
-  }).join("");
+        <p class="post-content">${escapeHtml(post.content)}</p>
+      </div>
 
-  $$('[data-like]').forEach(btn => btn.addEventListener("click", () => toggleLike(btn.dataset.like, btn)));
-  $$('[data-edit]').forEach(btn => btn.addEventListener("click", () => requestPassword("edit", btn.dataset.edit)));
-  $$('[data-delete]').forEach(btn => btn.addEventListener("click", () => requestPassword("delete", btn.dataset.delete)));
-  renderSummary();
+      <div class="post-actions">
+        <button class="action-btn ${liked ? "liked" : ""}" type="button" data-action="like" data-post-id="${post.id}">
+          <span>${liked ? "♥" : "♡"}</span> 좋아요 <strong>${Number(post.likes || 0)}</strong>
+        </button>
+        <button class="action-btn" type="button" data-action="toggle-comments" data-post-id="${post.id}" aria-expanded="${commentsOpen}">
+          <span>💬</span> 댓글 <strong>${postComments.length}</strong>
+        </button>
+        <button class="action-btn share" type="button" data-action="share" data-post-id="${post.id}">
+          <span>↗</span> 공유
+        </button>
+      </div>
+
+      <div class="comments-wrap" ${commentsOpen ? "" : "hidden"}>
+        <div class="comments-panel">
+          <div class="comment-list">
+            ${postComments.length ? postComments.map(renderComment).join("") : '<p class="comment-empty">첫 댓글을 남겨보세요.</p>'}
+          </div>
+          <form class="comment-form" data-post-id="${post.id}">
+            <input name="author" maxlength="12" value="${escapeHtml(localStorage.getItem("asrc_author_name") || "")}" placeholder="이름" aria-label="댓글 작성자 이름" required />
+            <input name="content" maxlength="300" placeholder="댓글을 입력하세요" aria-label="댓글 내용" required />
+            <input name="password" inputmode="numeric" pattern="[0-9]{4}" maxlength="4" placeholder="비밀번호 4자리" aria-label="댓글 비밀번호" required />
+            <button class="btn primary" type="submit">등록</button>
+          </form>
+        </div>
+      </div>
+    </article>
+  `;
 }
 
-function renderSummary() {
-  const items = meetingOpinions();
-  const totalLikes = items.reduce((sum, item) => sum + item.likes, 0);
-  const counts = items.reduce((acc, item) => {
-    acc[item.category] = (acc[item.category] || 0) + 1;
-    return acc;
-  }, {});
-  const topCategory = Object.entries(counts).sort((a, b) => b[1] - a[1])[0]?.[0] || "-";
-  const topOpinion = [...items].sort((a, b) => b.likes - a.likes)[0]?.title || "-";
-
-  $("#totalOpinions").textContent = items.length;
-  $("#opinionCountHero").textContent = items.length;
-  $("#totalLikes").textContent = totalLikes;
-  $("#topCategory").textContent = topCategory;
-  $("#topOpinion").textContent = topOpinion;
-  $("#progressBar").style.width = `${Math.min(items.length / 20 * 100, 100)}%`;
+function renderBoard() {
+  const list = sortedPosts();
+  $("#postList").innerHTML = list.map(renderPost).join("");
+  $("#emptyState").hidden = list.length > 0;
+  $("#postCount").textContent = posts.length;
+  $("#commentCount").textContent = comments.length;
+  $("#likeCount").textContent = posts.reduce((sum, post) => sum + Number(post.likes || 0), 0);
+  focusSharedPost();
 }
 
-async function toggleLike(id, button) {
-  if (!requireConnection()) return;
-  button.disabled = true;
-
-  const { data, error } = await db.rpc("toggle_opinion_like", {
-    p_opinion_id: id,
-    p_voter_id: voterId
-  });
-
-  button.disabled = false;
-  if (error) {
-    console.error(error);
-    showToast("공감 처리에 실패했습니다.");
+async function loadBoard({ silent = false } = {}) {
+  if (!db) {
+    renderBoard();
     return;
   }
 
-  const result = data?.[0];
-  const item = opinions.find(opinion => opinion.id === id);
-  if (item && result) item.likes = result.like_count;
-  if (result?.is_liked) {
-    if (!likedIds.includes(id)) likedIds.push(id);
-  } else {
-    likedIds = likedIds.filter(likedId => likedId !== id);
+  try {
+    const [postsResult, commentsResult, likesResult] = await Promise.all([
+      db.from("opinions")
+        .select("id, meeting_id, nickname, category, title, content, likes, created_at, updated_at")
+        .eq("meeting_id", BOARD_ID)
+        .order("created_at", { ascending: false }),
+      db.from("comments")
+        .select("id, opinion_id, author_name, content, created_at")
+        .order("created_at", { ascending: true }),
+      db.rpc("get_my_liked_opinions", {
+        p_voter_id: getVoterId(),
+        p_meeting_id: BOARD_ID
+      })
+    ]);
+
+    if (postsResult.error) throw postsResult.error;
+    if (commentsResult.error) throw commentsResult.error;
+    if (likesResult.error) throw likesResult.error;
+
+    posts = postsResult.data || [];
+    const postIds = new Set(posts.map(post => post.id));
+    comments = (commentsResult.data || []).filter(comment => postIds.has(comment.opinion_id));
+    likedPostIds = new Set((likesResult.data || []).map(item => item.opinion_id));
+    renderBoard();
+  } catch (error) {
+    console.error(error);
+    if (!silent) showToast(readableError(error, "게시판을 불러오지 못했습니다."));
   }
-  renderOpinions();
 }
 
-function openOpinionForm(category = "운영", editItem = null, verifiedPassword = "") {
-  $("#opinionForm").reset();
-  $("#editingId").value = editItem?.id || "";
-  editingPassword = verifiedPassword;
-  $("#modalTitle").textContent = editItem ? "의견 수정" : "새 의견 작성";
-  $("#opinionForm button[type=submit]").textContent = editItem ? "수정 내용 저장" : "의견 등록하기";
-  $("#nickname").value = editItem?.nickname || "";
-  $("#category").value = editItem?.category || category;
-  $("#opinionTitle").value = editItem?.title || "";
-  $("#opinionContent").value = editItem?.content || "";
-  $("#password").value = "";
-  $("#password").required = !editItem;
-  $("#passwordFieldWrap").hidden = Boolean(editItem);
-  $("#charCount").textContent = $("#opinionContent").value.length;
-  $("#opinionModal").classList.add("open");
-  $("#opinionModal").setAttribute("aria-hidden", "false");
+function openPostModal(post = null) {
+  $("#postForm").reset();
+  $("#editingPostId").value = post?.id || "";
+  $("#postModalTitle").textContent = post ? "글 수정" : "새 글 작성";
+  $("#postSubmitBtn").textContent = post ? "수정하기" : "등록하기";
+  $("#authorName").value = post?.nickname || localStorage.getItem("asrc_author_name") || "";
+  $("#category").value = post?.category || "운영";
+  $("#postTitle").value = post?.title || "";
+  $("#postContent").value = post?.content || "";
+  $("#postPassword").value = "";
+  updatePostCharCount();
+  $("#postModal").classList.add("open");
+  $("#postModal").setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
-  setTimeout(() => $("#nickname").focus(), 50);
+  setTimeout(() => $("#authorName").focus(), 50);
 }
 
-function closeOpinionForm() {
-  $("#opinionModal").classList.remove("open");
-  $("#opinionModal").setAttribute("aria-hidden", "true");
+function closePostModal() {
+  $("#postModal").classList.remove("open");
+  $("#postModal").setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
-  editingPassword = "";
 }
 
-function requestPassword(action, id) {
-  if (!requireConnection()) return;
-  pendingAction = { action, id };
-  $("#passwordCheck").value = "";
-  $("#passwordHelp").textContent = action === "delete"
-    ? "삭제하려면 작성할 때 입력한 4자리 비밀번호가 필요합니다."
-    : "수정하려면 작성할 때 입력한 4자리 비밀번호가 필요합니다.";
-  $("#passwordForm button[type=submit]").textContent = action === "delete" ? "삭제하기" : "확인";
+function openPasswordModal(action) {
+  passwordAction = action;
+  $("#passwordForm").reset();
+  $("#passwordTitle").textContent = action.type === "delete-comment" ? "댓글 삭제" : "글 삭제";
+  $("#passwordHelp").textContent = "작성할 때 설정한 4자리 비밀번호를 입력해주세요.";
   $("#passwordModal").classList.add("open");
   $("#passwordModal").setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
@@ -316,190 +254,287 @@ function requestPassword(action, id) {
 }
 
 function closePasswordModal() {
+  passwordAction = null;
   $("#passwordModal").classList.remove("open");
   $("#passwordModal").setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
-  pendingAction = null;
 }
 
-$("#opinionForm").addEventListener("submit", async event => {
+function updatePostCharCount() {
+  $("#postCharCount").textContent = $("#postContent").value.length;
+}
+
+async function submitPost(event) {
   event.preventDefault();
-  if (!requireConnection()) return;
+  if (!db) return showToast("Supabase 연결 설정을 먼저 완료해주세요.");
 
-  const editingId = $("#editingId").value;
-  const password = $("#password").value.trim();
-  if (!editingId && !/^\d{4}$/.test(password)) {
-    showToast("비밀번호는 숫자 4자리로 입력해주세요.");
-    return;
-  }
+  const id = $("#editingPostId").value;
+  const author = $("#authorName").value.trim();
+  const category = $("#category").value;
+  const title = $("#postTitle").value.trim();
+  const content = $("#postContent").value.trim();
+  const password = $("#postPassword").value.trim();
+  const button = $("#postSubmitBtn");
 
-  const submitButton = $("#opinionForm button[type=submit]");
-  submitButton.disabled = true;
-  submitButton.textContent = "저장 중...";
+  if (!/^\d{4}$/.test(password)) return showToast("비밀번호는 숫자 4자리로 입력해주세요.");
 
-  const common = {
-    p_nickname: $("#nickname").value.trim(),
-    p_category: $("#category").value,
-    p_title: $("#opinionTitle").value.trim(),
-    p_content: $("#opinionContent").value.trim()
-  };
+  button.disabled = true;
+  button.textContent = id ? "수정 중..." : "등록 중...";
 
-  const result = editingId
-    ? await db.rpc("update_opinion", {
-        p_id: editingId,
-        p_password: editingPassword,
-        ...common
-      })
-    : await db.rpc("create_opinion", {
-        p_meeting_id: currentMeeting,
+  try {
+    let result;
+    if (id) {
+      result = await db.rpc("update_opinion", {
+        p_id: id,
         p_password: password,
-        ...common
+        p_nickname: author,
+        p_category: category,
+        p_title: title,
+        p_content: content
       });
-
-  submitButton.disabled = false;
-  submitButton.textContent = editingId ? "수정 내용 저장" : "의견 등록하기";
-
-  if (result.error) {
-    console.error(result.error);
-    showToast(result.error.message || "저장에 실패했습니다.");
-    return;
-  }
-  if (editingId && result.data !== true) {
-    showToast("비밀번호가 일치하지 않거나 의견이 없습니다.");
-    return;
-  }
-
-  closeOpinionForm();
-  await loadOpinions({ silent: true });
-  showToast(editingId ? "의견이 수정되었습니다." : "의견이 등록되었습니다.");
-});
-
-$("#passwordForm").addEventListener("submit", async event => {
-  event.preventDefault();
-  if (!pendingAction || !requireConnection()) return;
-
-  const password = $("#passwordCheck").value.trim();
-  if (!/^\d{4}$/.test(password)) {
-    showToast("숫자 4자리를 입력해주세요.");
-    return;
-  }
-
-  const { action, id } = pendingAction;
-  const submitButton = $("#passwordForm button[type=submit]");
-  submitButton.disabled = true;
-
-  if (action === "edit") {
-    const { data, error } = await db.rpc("verify_opinion_password", {
-      p_id: id,
-      p_password: password
-    });
-    submitButton.disabled = false;
-
-    if (error || data !== true) {
-      if (error) console.error(error);
-      showToast("비밀번호가 일치하지 않습니다.");
-      return;
+      if (result.error) throw result.error;
+      if (!result.data) throw new Error("비밀번호가 맞지 않습니다.");
+    } else {
+      result = await db.rpc("create_opinion", {
+        p_meeting_id: BOARD_ID,
+        p_nickname: author,
+        p_category: category,
+        p_title: title,
+        p_content: content,
+        p_password: password
+      });
+      if (result.error) throw result.error;
     }
 
-    const item = opinions.find(opinion => opinion.id === id);
+    localStorage.setItem("asrc_author_name", author);
+    closePostModal();
+    await loadBoard({ silent: true });
+    showToast(id ? "글을 수정했습니다." : "글을 등록했습니다.");
+  } catch (error) {
+    console.error(error);
+    showToast(readableError(error, id ? "글을 수정하지 못했습니다." : "글을 등록하지 못했습니다."));
+  } finally {
+    button.disabled = false;
+    button.textContent = id ? "수정하기" : "등록하기";
+  }
+}
+
+async function toggleLike(postId, button) {
+  if (!db) return showToast("Supabase 연결 설정을 먼저 완료해주세요.");
+  button.disabled = true;
+  try {
+    const { data, error } = await db.rpc("toggle_opinion_like", {
+      p_opinion_id: postId,
+      p_voter_id: getVoterId()
+    });
+    if (error) throw error;
+    const row = Array.isArray(data) ? data[0] : data;
+    const post = posts.find(item => item.id === postId);
+    if (post && row) post.likes = Number(row.like_count || 0);
+    if (row?.is_liked) likedPostIds.add(postId);
+    else likedPostIds.delete(postId);
+    renderBoard();
+  } catch (error) {
+    console.error(error);
+    showToast(readableError(error, "좋아요를 반영하지 못했습니다."));
+  } finally {
+    button.disabled = false;
+  }
+}
+
+async function submitComment(form) {
+  if (!db) return showToast("Supabase 연결 설정을 먼저 완료해주세요.");
+  const postId = form.dataset.postId;
+  const author = form.elements.author.value.trim();
+  const content = form.elements.content.value.trim();
+  const password = form.elements.password.value.trim();
+  const button = $("button[type='submit']", form);
+
+  if (!/^\d{4}$/.test(password)) return showToast("댓글 비밀번호는 숫자 4자리로 입력해주세요.");
+
+  button.disabled = true;
+  button.textContent = "등록 중";
+  try {
+    const { error } = await db.rpc("create_comment", {
+      p_opinion_id: postId,
+      p_author_name: author,
+      p_content: content,
+      p_password: password
+    });
+    if (error) throw error;
+    localStorage.setItem("asrc_author_name", author);
+    openedCommentIds.add(postId);
+    await loadBoard({ silent: true });
+    showToast("댓글을 등록했습니다.");
+  } catch (error) {
+    console.error(error);
+    showToast(readableError(error, "댓글을 등록하지 못했습니다."));
+  } finally {
+    button.disabled = false;
+    button.textContent = "등록";
+  }
+}
+
+async function confirmPasswordAction(event) {
+  event.preventDefault();
+  if (!db || !passwordAction) return;
+  const password = $("#passwordCheck").value.trim();
+  const button = $("#passwordForm button");
+  if (!/^\d{4}$/.test(password)) return showToast("비밀번호는 숫자 4자리로 입력해주세요.");
+
+  button.disabled = true;
+  button.textContent = "확인 중...";
+  try {
+    if (passwordAction.type === "delete-post") {
+      const { data, error } = await db.rpc("delete_opinion", {
+        p_id: passwordAction.id,
+        p_password: password
+      });
+      if (error) throw error;
+      if (!data) throw new Error("비밀번호가 맞지 않습니다.");
+      showToast("글을 삭제했습니다.");
+    } else if (passwordAction.type === "delete-comment") {
+      const { data, error } = await db.rpc("delete_comment", {
+        p_id: passwordAction.id,
+        p_password: password
+      });
+      if (error) throw error;
+      if (!data) throw new Error("비밀번호가 맞지 않습니다.");
+      showToast("댓글을 삭제했습니다.");
+    }
     closePasswordModal();
-    if (item) openOpinionForm(item.category, item, password);
-    return;
+    await loadBoard({ silent: true });
+  } catch (error) {
+    console.error(error);
+    showToast(readableError(error, "삭제하지 못했습니다."));
+  } finally {
+    button.disabled = false;
+    button.textContent = "확인";
   }
+}
 
-  const { data, error } = await db.rpc("delete_opinion", {
-    p_id: id,
-    p_password: password
-  });
-  submitButton.disabled = false;
-
-  if (error || data !== true) {
-    if (error) console.error(error);
-    showToast("비밀번호가 일치하지 않습니다.");
-    return;
-  }
-
-  closePasswordModal();
-  likedIds = likedIds.filter(likedId => likedId !== id);
-  await loadOpinions({ silent: true });
-  showToast("의견이 삭제되었습니다.");
-});
-
-$("#opinionContent").addEventListener("input", event => {
-  $("#charCount").textContent = event.target.value.length;
-});
-
-$("#openFormBtn").addEventListener("click", () => {
-  if (requireConnection()) openOpinionForm();
-});
-$$('[data-close-modal]').forEach(el => el.addEventListener("click", closeOpinionForm));
-$$('[data-close-password]').forEach(el => el.addEventListener("click", closePasswordModal));
-
-$$(".meeting-tab").forEach(btn => btn.addEventListener("click", () => setMeeting(btn.dataset.meeting)));
-$$(".filter").forEach(btn => btn.addEventListener("click", () => {
-  currentFilter = btn.dataset.filter;
-  $$(".filter").forEach(item => item.classList.toggle("active", item === btn));
-  renderOpinions();
-}));
-$("#sortSelect").addEventListener("change", renderOpinions);
-
-$("#exportBtn").addEventListener("click", () => {
-  const data = {
-    exportedAt: new Date().toISOString(),
-    meeting: meetings[currentMeeting],
-    opinions: meetingOpinions()
+async function sharePost(postId) {
+  const post = posts.find(item => item.id === postId);
+  const url = new URL(window.location.href);
+  url.hash = `post-${postId}`;
+  const shareData = {
+    title: post?.title ? `ASRC · ${post.title}` : "ASRC 운영 계획",
+    text: post?.content?.slice(0, 90) || "ASRC 운영 계획 게시판",
+    url: url.toString()
   };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-  const url = URL.createObjectURL(blob);
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `ASRC_${currentMeeting}_opinions.json`;
-  link.click();
-  URL.revokeObjectURL(url);
-  showToast("의견 데이터를 내려받았습니다.");
+
+  try {
+    if (navigator.share) {
+      await navigator.share(shareData);
+    } else if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(shareData.url);
+      showToast("글 링크를 복사했습니다.");
+    } else {
+      const input = document.createElement("textarea");
+      input.value = shareData.url;
+      document.body.appendChild(input);
+      input.select();
+      document.execCommand("copy");
+      input.remove();
+      showToast("글 링크를 복사했습니다.");
+    }
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast("공유하지 못했습니다.");
+  }
+}
+
+function focusSharedPost() {
+  if (!location.hash.startsWith("#post-")) return;
+  const target = document.querySelector(location.hash);
+  if (!target) return;
+  setTimeout(() => {
+    target.scrollIntoView({ behavior: "smooth", block: "center" });
+    target.classList.add("shared-target");
+    setTimeout(() => target.classList.remove("shared-target"), 1500);
+  }, 120);
+}
+
+function handlePostListClick(event) {
+  const button = event.target.closest("[data-action]");
+  if (!button) return;
+  const action = button.dataset.action;
+  const postId = button.dataset.postId;
+
+  if (action === "edit-post") {
+    const post = posts.find(item => item.id === postId);
+    if (post) openPostModal(post);
+  } else if (action === "delete-post") {
+    openPasswordModal({ type: "delete-post", id: postId });
+  } else if (action === "like") {
+    toggleLike(postId, button);
+  } else if (action === "toggle-comments") {
+    if (openedCommentIds.has(postId)) openedCommentIds.delete(postId);
+    else openedCommentIds.add(postId);
+    renderBoard();
+  } else if (action === "share") {
+    sharePost(postId);
+  } else if (action === "delete-comment") {
+    openPasswordModal({ type: "delete-comment", id: button.dataset.commentId });
+  }
+}
+
+function startRealtime() {
+  if (!db) return;
+  const reload = () => {
+    clearTimeout(reloadTimer);
+    reloadTimer = setTimeout(() => loadBoard({ silent: true }), 250);
+  };
+
+  realtimePosts = db
+    .channel("asrc-board-posts")
+    .on("postgres_changes", { event: "*", schema: "public", table: "opinions" }, reload)
+    .subscribe();
+
+  realtimeComments = db
+    .channel("asrc-board-comments")
+    .on("postgres_changes", { event: "*", schema: "public", table: "comments" }, reload)
+    .subscribe();
+}
+
+$("#setupBanner").hidden = configured;
+$("#openPostBtn").addEventListener("click", () => openPostModal());
+$("#postForm").addEventListener("submit", submitPost);
+$("#postContent").addEventListener("input", updatePostCharCount);
+$("#passwordForm").addEventListener("submit", confirmPasswordAction);
+$("#postList").addEventListener("click", handlePostListClick);
+$("#postList").addEventListener("submit", event => {
+  const form = event.target.closest(".comment-form");
+  if (!form) return;
+  event.preventDefault();
+  submitComment(form);
 });
 
-const menuBtn = $("#menuBtn");
-menuBtn.addEventListener("click", () => {
-  const open = $("#mobileNav").classList.toggle("open");
-  menuBtn.setAttribute("aria-expanded", String(open));
-  menuBtn.textContent = open ? "×" : "☰";
-});
-$$("#mobileNav a").forEach(link => link.addEventListener("click", () => {
-  $("#mobileNav").classList.remove("open");
-  menuBtn.setAttribute("aria-expanded", "false");
-  menuBtn.textContent = "☰";
+$$('[data-close-post]').forEach(element => element.addEventListener("click", closePostModal));
+$$('[data-close-password]').forEach(element => element.addEventListener("click", closePasswordModal));
+
+$$('.filter').forEach(button => button.addEventListener("click", () => {
+  currentFilter = button.dataset.filter;
+  $$('.filter').forEach(item => item.classList.toggle("active", item === button));
+  renderBoard();
 }));
 
-window.addEventListener("scroll", () => {
-  $("#topBtn").classList.toggle("show", window.scrollY > 520);
-});
+$("#sortSelect").addEventListener("change", renderBoard);
+window.addEventListener("hashchange", focusSharedPost);
+window.addEventListener("scroll", () => $("#topBtn").classList.toggle("show", window.scrollY > 500));
 $("#topBtn").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
 
 document.addEventListener("keydown", event => {
   if (event.key === "Escape") {
-    closeOpinionForm();
+    closePostModal();
     closePasswordModal();
   }
 });
 
-function startRealtime() {
-  if (!db) return;
-  realtimeChannel = db
-    .channel("asrc-opinions-live")
-    .on("postgres_changes", { event: "*", schema: "public", table: "opinions" }, payload => {
-      const meetingId = payload.new?.meeting_id || payload.old?.meeting_id;
-      if (meetingId && meetingId !== currentMeeting) return;
-      clearTimeout(reloadTimer);
-      reloadTimer = setTimeout(() => loadOpinions({ silent: true }), 200);
-    })
-    .subscribe();
-}
-
 window.addEventListener("beforeunload", () => {
-  if (db && realtimeChannel) db.removeChannel(realtimeChannel);
+  if (db && realtimePosts) db.removeChannel(realtimePosts);
+  if (db && realtimeComments) db.removeChannel(realtimeComments);
 });
 
-$("#setupBanner").hidden = configured;
-setMeeting(currentMeeting);
+renderBoard();
+loadBoard();
 startRealtime();
